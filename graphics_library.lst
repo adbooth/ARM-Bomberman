@@ -1,0 +1,1495 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             graphics_library, CODE, READWRI
+TE
+    2 00000000         ; EXPORTs
+    3 00000000                 EXPORT           brick_setup
+    4 00000000                 EXPORT           change_character
+    5 00000000                 EXPORT           change_score_value
+    6 00000000                 EXPORT           change_time_value
+    7 00000000                 EXPORT           check_location
+    8 00000000                 EXPORT           clear_screen
+    9 00000000                 EXPORT           cursor_position
+   10 00000000                 EXPORT           cursor_down
+   11 00000000                 EXPORT           cursor_left
+   12 00000000                 EXPORT           cursor_right
+   13 00000000                 EXPORT           cursor_up
+   14 00000000                 EXPORT           draw_board
+   15 00000000                 EXPORT           draw_bomberman
+   16 00000000                 EXPORT           draw_on_board
+   17 00000000                 EXPORT           edit_array
+   18 00000000                 EXPORT           populate_array
+   19 00000000                 EXPORT           read_array
+   20 00000000         ; IMPORTs
+   21 00000000                 IMPORT           output_character
+   22 00000000                 IMPORT           int_to_numberString
+   23 00000000                 IMPORT           output_string
+   24 00000000                 IMPORT           set_figs
+   25 00000000                 IMPORT           println
+   26 00000000                 IMPORT           store_string
+   27 00000000                 IMPORT           div_and_mod
+   28 00000000                 IMPORT           get_rand
+   29 00000000         
+   30 00000000         
+   31 00000000         
+   32 00000000         
+   33 00000000         
+   34 00000000 20 20 20 
+              20 20 20 
+              20 42 6F 
+              6D 62 65 
+              72 6D 61 
+              6E 20 20 
+              20 20 20 
+              20 20 20 
+              20 00    title   =                "       Bomberman         ",0x0
+0
+   35 0000001A 00 00           ALIGN
+   36 0000001C 54 69 6D 
+              65 3A 31 
+              32 30 20 
+              20 20 20 
+              20 20 20 
+              53 63 6F 
+              72 65 3A 
+              30 30 30 
+              30 00    HUD     =                "Time:120       Score:0000",0x0
+0
+   37 00000036 00 00           ALIGN
+   38 00000038 5A 5A 5A 
+              5A 5A 5A 
+              5A 5A 5A 
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+              5A 5A 5A 
+              5A 5A 5A 
+              5A 5A 5A 
+              5A 5A 5A 
+              5A 5A 5A 
+              5A 00    edge    =                "ZZZZZZZZZZZZZZZZZZZZZZZZZ",0x0
+0
+   39 00000052 00 00           ALIGN
+   40 00000054 5A 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              20 20 20 
+              5A 00    row     =                "Z                       Z",0x0
+0
+   41 0000006E 00 00           ALIGN
+   42 00000070 5A 20 5A 
+              20 5A 20 
+              5A 20 5A 
+              20 5A 20 
+              5A 20 5A 
+              20 5A 20 
+              5A 20 5A 
+              20 5A 20 
+              5A 00    zRow    =                "Z Z Z Z Z Z Z Z Z Z Z Z Z",0x0
+0
+   43 0000008A 00 00           ALIGN
+   44 0000008C         
+   45 0000008C         
+   46 0000008C 00000000 
+                       vec_0   DCD              0x00000000
+   47 00000090 00000000        DCD              0x00000000
+   48 00000094 00000000        DCD              0x00000000
+   49 00000098 00000000        DCD              0x00000000
+   50 0000009C 00000000        DCD              0x00000000
+   51 000000A0 00000000        DCD              0x00000000
+   52 000000A4 00000000        DCD              0x00000000
+   53 000000A8                 ALIGN
+   54 000000A8         
+   55 000000A8 00000000 
+                       vec_1   DCD              0x00000000
+   56 000000AC 00000000        DCD              0x00000000
+   57 000000B0 00000000        DCD              0x00000000
+   58 000000B4 00000000        DCD              0x00000000
+   59 000000B8 00000000        DCD              0x00000000
+   60 000000BC 00000000        DCD              0x00000000
+   61 000000C0 00000000        DCD              0x00000000
+   62 000000C4                 ALIGN
+   63 000000C4 00000000 
+                       vec_2   DCD              0x00000000
+   64 000000C8 00000000        DCD              0x00000000
+   65 000000CC 00000000        DCD              0x00000000
+   66 000000D0 00000000        DCD              0x00000000
+   67 000000D4 00000000        DCD              0x00000000
+   68 000000D8 00000000        DCD              0x00000000
+   69 000000DC 00000000        DCD              0x00000000
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   70 000000E0                 ALIGN
+   71 000000E0 00000000 
+                       vec_3   DCD              0x00000000
+   72 000000E4 00000000        DCD              0x00000000
+   73 000000E8 00000000        DCD              0x00000000
+   74 000000EC 00000000        DCD              0x00000000
+   75 000000F0 00000000        DCD              0x00000000
+   76 000000F4 00000000        DCD              0x00000000
+   77 000000F8 00000000        DCD              0x00000000
+   78 000000FC                 ALIGN
+   79 000000FC 00000000 
+                       vec_4   DCD              0x00000000
+   80 00000100 00000000        DCD              0x00000000
+   81 00000104 00000000        DCD              0x00000000
+   82 00000108 00000000        DCD              0x00000000
+   83 0000010C 00000000        DCD              0x00000000
+   84 00000110 00000000        DCD              0x00000000
+   85 00000114 00000000        DCD              0x00000000
+   86 00000118                 ALIGN
+   87 00000118 00000000 
+                       vec_5   DCD              0x00000000
+   88 0000011C 00000000        DCD              0x00000000
+   89 00000120 00000000        DCD              0x00000000
+   90 00000124 00000000        DCD              0x00000000
+   91 00000128 00000000        DCD              0x00000000
+   92 0000012C 00000000        DCD              0x00000000
+   93 00000130 00000000        DCD              0x00000000
+   94 00000134                 ALIGN
+   95 00000134 00000000 
+                       vec_6   DCD              0x00000000
+   96 00000138 00000000        DCD              0x00000000
+   97 0000013C 00000000        DCD              0x00000000
+   98 00000140 00000000        DCD              0x00000000
+   99 00000144 00000000        DCD              0x00000000
+  100 00000148 00000000        DCD              0x00000000
+  101 0000014C 00000000        DCD              0x00000000
+  102 00000150                 ALIGN
+  103 00000150 00000000 
+                       vec_7   DCD              0x00000000
+  104 00000154 00000000        DCD              0x00000000
+  105 00000158 00000000        DCD              0x00000000
+  106 0000015C 00000000        DCD              0x00000000
+  107 00000160 00000000        DCD              0x00000000
+  108 00000164 00000000        DCD              0x00000000
+  109 00000168 00000000        DCD              0x00000000
+  110 0000016C                 ALIGN
+  111 0000016C 00000000 
+                       vec_8   DCD              0x00000000
+  112 00000170 00000000        DCD              0x00000000
+  113 00000174 00000000        DCD              0x00000000
+  114 00000178 00000000        DCD              0x00000000
+  115 0000017C 00000000        DCD              0x00000000
+  116 00000180 00000000        DCD              0x00000000
+  117 00000184 00000000        DCD              0x00000000
+  118 00000188                 ALIGN
+  119 00000188 00000000 
+                       vec_9   DCD              0x00000000
+  120 0000018C 00000000        DCD              0x00000000
+  121 00000190 00000000        DCD              0x00000000
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  122 00000194 00000000        DCD              0x00000000
+  123 00000198 00000000        DCD              0x00000000
+  124 0000019C 00000000        DCD              0x00000000
+  125 000001A0 00000000        DCD              0x00000000
+  126 000001A4                 ALIGN
+  127 000001A4 00000000 
+                       vec_10  DCD              0x00000000
+  128 000001A8 00000000        DCD              0x00000000
+  129 000001AC 00000000        DCD              0x00000000
+  130 000001B0 00000000        DCD              0x00000000
+  131 000001B4 00000000        DCD              0x00000000
+  132 000001B8 00000000        DCD              0x00000000
+  133 000001BC 00000000        DCD              0x00000000
+  134 000001C0                 ALIGN
+  135 000001C0 00000000 
+                       vec_11  DCD              0x00000000
+  136 000001C4 00000000        DCD              0x00000000
+  137 000001C8 00000000        DCD              0x00000000
+  138 000001CC 00000000        DCD              0x00000000
+  139 000001D0 00000000        DCD              0x00000000
+  140 000001D4 00000000        DCD              0x00000000
+  141 000001D8 00000000        DCD              0x00000000
+  142 000001DC                 ALIGN
+  143 000001DC 00000000 
+                       vec_12  DCD              0x00000000
+  144 000001E0 00000000        DCD              0x00000000
+  145 000001E4 00000000        DCD              0x00000000
+  146 000001E8 00000000        DCD              0x00000000
+  147 000001EC 00000000        DCD              0x00000000
+  148 000001F0 00000000        DCD              0x00000000
+  149 000001F4 00000000        DCD              0x00000000
+  150 000001F8                 ALIGN
+  151 000001F8 00000000 
+                       vec_13  DCD              0x00000000
+  152 000001FC 00000000        DCD              0x00000000
+  153 00000200 00000000        DCD              0x00000000
+  154 00000204 00000000        DCD              0x00000000
+  155 00000208 00000000        DCD              0x00000000
+  156 0000020C 00000000        DCD              0x00000000
+  157 00000210 00000000        DCD              0x00000000
+  158 00000214                 ALIGN
+  159 00000214 00000000 
+                       vec_14  DCD              0x00000000
+  160 00000218 00000000        DCD              0x00000000
+  161 0000021C 00000000        DCD              0x00000000
+  162 00000220 00000000        DCD              0x00000000
+  163 00000224 00000000        DCD              0x00000000
+  164 00000228 00000000        DCD              0x00000000
+  165 0000022C 00000000        DCD              0x00000000
+  166 00000230                 ALIGN
+  167 00000230         
+  168 00000230         
+  169 00000230 00000000 
+                       array_base
+                               DCD              vec_0
+  170 00000234 00000000        DCD              vec_1
+  171 00000238 00000000        DCD              vec_2
+  172 0000023C 00000000        DCD              vec_3
+  173 00000240 00000000        DCD              vec_4
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  174 00000244 00000000        DCD              vec_5
+  175 00000248 00000000        DCD              vec_6
+  176 0000024C 00000000        DCD              vec_7
+  177 00000250 00000000        DCD              vec_8
+  178 00000254 00000000        DCD              vec_9
+  179 00000258 00000000        DCD              vec_10
+  180 0000025C 00000000        DCD              vec_11
+  181 00000260 00000000        DCD              vec_12
+  182 00000264 00000000        DCD              vec_13
+  183 00000268 00000000        DCD              vec_14
+  184 0000026C         
+  185 0000026C         
+  186 0000026C         
+  187 0000026C         
+  188 0000026C         
+  189 0000026C         
+  190 0000026C 1B 5B 32 
+              4A 00    clear_chars
+                               =                0x1B,"[2J",0
+  191 00000271 00 00 00        ALIGN
+  192 00000274 1B 5B 31 
+              41 00    cursor_up_string
+                               =                0x1B,"[1A",0
+  193 00000279 00 00 00        ALIGN
+  194 0000027C 1B 5B 31 
+              42 00    cursor_down_string
+                               =                0x1B,"[1B",0
+  195 00000281 00 00 00        ALIGN
+  196 00000284 1B 5B 31 
+              43 00    cursor_right_string
+                               =                0x1B,"[1C",0
+  197 00000289 00 00 00        ALIGN
+  198 0000028C 1B 5B 31 
+              44 00    cursor_left_string
+                               =                0x1B,"[1D",0
+  199 00000291 00 00 00        ALIGN
+  200 00000294         
+  201 00000294         
+  202 00000294         
+  203 00000294         
+  204 00000294         
+  205 00000294         ; Routine brick_setup
+  206 00000294         ; Fills already populated array with bricks ('#') and di
+                       splays them on the board
+  207 00000294         ; Author: ADB
+  208 00000294         ; Calls: get_rand
+  209 00000294         ; arg0: number of bricks to be added
+  210 00000294         brick_setup
+  211 00000294 E92D4C0F        STMFD            sp!, {r0-r3, r10, r11, lr}
+  212 00000298         ; Move brick amount out of the way to r10 and initialize
+                        counter in r11 to 1
+  213 00000298 E3A02023        MOV              r2, #'#'
+  214 0000029C E1A0A000        MOV              r10, r0
+  215 000002A0 E3A0B001        MOV              r11, #1
+  216 000002A4         bs_loop
+  217 000002A4         ; Pick random row
+  218 000002A4 E3A0000B        MOV              r0, #11
+  219 000002A8 EBFFFFFE        BL               get_rand
+  220 000002AC         ; Decide what do based on row index
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  221 000002AC E1A01000        MOV              r1, r0
+  222 000002B0 E3500000        CMP              r0, #0
+  223 000002B4 0A000008        BEQ              bs_first_short_row
+  224 000002B8 E3500002        CMP              r0, #2
+  225 000002BC DA00000E        BLE              bs_other_short_rows
+  226 000002C0         ; For all normal rows, pick number between 0 and 22 and 
+                       check location for brick or player
+  227 000002C0         bs_normal_loop
+  228 000002C0 E3A00017        MOV              r0, #23
+  229 000002C4 EBFFFFFE        BL               get_rand
+  230 000002C8 E1A03000        MOV              r3, r0
+  231 000002CC EBFFFFFE        BL               check_location
+  232 000002D0 E3500000        CMP              r0, #0
+  233 000002D4 0AFFFFF9        BEQ              bs_normal_loop
+  234 000002D8 EA00000E        B                loop_check
+  235 000002DC         bs_first_short_row
+  236 000002DC E3A00014        MOV              r0, #20
+  237 000002E0 EBFFFFFE        BL               get_rand
+  238 000002E4 E2800003        ADD              r0, r0, #3
+  239 000002E8 E1A03000        MOV              r3, r0
+  240 000002EC EBFFFFFE        BL               check_location
+  241 000002F0 E3500000        CMP              r0, #0
+  242 000002F4 0AFFFFF8        BEQ              bs_first_short_row
+  243 000002F8 EA000006        B                loop_check
+  244 000002FC         bs_other_short_rows
+  245 000002FC E3A00016        MOV              r0, #22
+  246 00000300 EBFFFFFE        BL               get_rand
+  247 00000304 E2800001        ADD              r0, r0, #1
+  248 00000308 E1A03000        MOV              r3, r0
+  249 0000030C EBFFFFFE        BL               check_location
+  250 00000310 E3500000        CMP              r0, #0
+  251 00000314 0AFFFFF8        BEQ              bs_other_short_rows
+  252 00000318         loop_check
+  253 00000318 E1A00003        MOV              r0, r3
+  254 0000031C EBFFFFFE        BL               draw_on_board
+  255 00000320 EBFFFFFE        BL               edit_array
+  256 00000324 E15A000B        CMP              r10, r11
+  257 00000328 E28BB001        ADD              r11, r11, #1
+  258 0000032C 1AFFFFDC        BNE              bs_loop
+  259 00000330         ; Return to caller
+  260 00000330 E8BD4C0F        LDMFD            sp!, {r0-r3, r10, r11, lr}
+  261 00000334 E12FFF1E        BX               lr
+  262 00000338         ; No return arguments or addresses
+  263 00000338         
+  264 00000338         
+  265 00000338         
+  266 00000338         
+  267 00000338         
+  268 00000338         ; Routine change_character
+  269 00000338         ; Changes a character at position x,y
+  270 00000338         ; Author: ADB
+  271 00000338         ; Calls: cursor_position, output_character
+  272 00000338         ; arg0: x position of character to be changed
+  273 00000338         ; arg1: y position of character to be changed
+  274 00000338         ; arg2: ASCII value of character to be output
+  275 00000338         change_character
+  276 00000338 E92D4007        STMFD            sp!, {r0, r1, r2, lr}
+  277 0000033C EBFFFFFE        BL               cursor_position
+  278 00000340 E1A00002        MOV              r0, r2
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  279 00000344 EBFFFFFE        BL               output_character
+  280 00000348         ; Return to caller
+  281 00000348 E8BD4007        LDMFD            sp!, {r0, r1, r2, lr}
+  282 0000034C E12FFF1E        BX               lr
+  283 00000350         ; ret0: arg0
+  284 00000350         ; ret1: arg1
+  285 00000350         ; ret2: arg2
+  286 00000350         
+  287 00000350         
+  288 00000350         
+  289 00000350         
+  290 00000350         
+  291 00000350         ; Routine change_score_value
+  292 00000350         ; Changes the value of the score field on the HUD
+  293 00000350         ; Author: ADB
+  294 00000350         ; Calls: cursor_position, int_to_numberString, set_figs,
+                        output_string
+  295 00000350         ; arg0: value to change the score to
+  296 00000350         change_score_value
+  297 00000350 E92D4007        STMFD            sp!, {r0, r1, r2, lr}
+  298 00000354         ; Store par0 in r2
+  299 00000354 E1A02000        MOV              r2, r0
+  300 00000358         ; Move cursor to time location
+  301 00000358 E3A00016        MOV              r0, #22
+  302 0000035C E3A01002        MOV              r1, #2
+  303 00000360 EBFFFFFE        BL               cursor_position
+  304 00000364         ; Turn par0 into ASCII numberString and output
+  305 00000364 E1A00002        MOV              r0, r2
+  306 00000368 EBFFFFFE        BL               int_to_numberString
+  307 0000036C E3A00004        MOV              r0, #4
+  308 00000370 EBFFFFFE        BL               set_figs
+  309 00000374 EBFFFFFE        BL               output_string
+  310 00000378         ; Return to caller
+  311 00000378 E8BD4007        LDMFD            sp!, {r0, r1, r2, lr}
+  312 0000037C E12FFF1E        BX               lr
+  313 00000380         ; ret0: arg0
+  314 00000380         
+  315 00000380         
+  316 00000380         
+  317 00000380         
+  318 00000380         
+  319 00000380         ; Routine change_time_value
+  320 00000380         ; Changes the value of the time field on the HUD
+  321 00000380         ; Author: ADB
+  322 00000380         ; Calls: cursor_position, int_to_numberString, set_figs,
+                        output_string
+  323 00000380         ; arg0: value to change the time to
+  324 00000380         change_time_value
+  325 00000380 E92D4007        STMFD            sp!, {r0, r1, r2, lr}
+  326 00000384         ; Store par0 in r2
+  327 00000384 E1A02000        MOV              r2, r0
+  328 00000388         ; Move cursor to time location
+  329 00000388 E3A00006        MOV              r0, #6
+  330 0000038C E3A01002        MOV              r1, #2
+  331 00000390 EBFFFFFE        BL               cursor_position
+  332 00000394         ; Turn par0 into ASCII numberString and output
+  333 00000394 E1A00002        MOV              r0, r2
+  334 00000398 EBFFFFFE        BL               int_to_numberString
+  335 0000039C E3A00003        MOV              r0, #3
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+  336 000003A0 EBFFFFFE        BL               set_figs
+  337 000003A4 EBFFFFFE        BL               output_string
+  338 000003A8         ; Return to caller
+  339 000003A8 E8BD4007        LDMFD            sp!, {r0, r1, r2, lr}
+  340 000003AC E12FFF1E        BX               lr
+  341 000003B0         ; ret0: arg0
+  342 000003B0         
+  343 000003B0         
+  344 000003B0         ; Routine check_location
+  345 000003B0         ; Returns 1 if location is clear, 0 otherwise
+  346 000003B0         ; Author: ADB
+  347 000003B0         ; Calls: read_array
+  348 000003B0         ; arg0: x value of location of interest
+  349 000003B0         ; arg1: y value of location of interest
+  350 000003B0         check_location
+  351 000003B0 E92D4002        STMFD            sp!, {r1, lr}
+  352 000003B4         ; Get outputs and compare to space
+  353 000003B4 EBFFFFFE        BL               read_array
+  354 000003B8 E3500020        CMP              r0, #' '
+  355 000003BC         ; Set return flag depending on comparison
+  356 000003BC 03A00001        MOVEQ            r0, #1
+  357 000003C0 13A00000        MOVNE            r0, #0
+  358 000003C4         ; Return to caller
+  359 000003C4 E8BD4002        LDMFD            sp!, {r1, lr}
+  360 000003C8 E12FFF1E        BX               lr
+  361 000003CC         ; ret0: arg0
+  362 000003CC         
+  363 000003CC         
+  364 000003CC         ; Routine clear_screen
+  365 000003CC         ; Clears the screen and moves cursor to 0 position
+  366 000003CC         ; Author: ADB & MTH
+  367 000003CC         ; Calls: output_string, cursor_position
+  368 000003CC         ; No input arguments or addresses
+  369 000003CC         clear_screen
+  370 000003CC E92D4013        STMFD            sp!, {r0, r1, r4, lr}
+  371 000003D0 E59F4230        LDR              r4, =clear_chars
+  372 000003D4 EBFFFFFE        BL               output_string
+  373 000003D8 E3A00000        MOV              r0, #0
+  374 000003DC E3A01000        MOV              r1, #0
+  375 000003E0 EBFFFFFE        BL               cursor_position
+  376 000003E4         ; Return to caller
+  377 000003E4 E8BD4013        LDMFD            sp!, {r0, r1, r4, lr}
+  378 000003E8 E12FFF1E        BX               lr
+  379 000003EC         ; No output arguments or addresses
+  380 000003EC         
+  381 000003EC         
+  382 000003EC         ; Routine cursor_position
+  383 000003EC         ; Moves the cursor to a location on screen
+  384 000003EC         ; Author: ADB
+  385 000003EC         ; Calls: output_character, int_to_numberString
+  386 000003EC         ; arg0: x position on screen
+  387 000003EC         ; arg1: y position on screen
+  388 000003EC         cursor_position
+  389 000003EC E92D4017        STMFD            sp!, {r0, r1, r2, r4, lr}
+  390 000003F0 E1A02000        MOV              r2, r0
+  391 000003F4         ; Output escape character and left bracket character
+  392 000003F4 E3A0001B        MOV              r0, #0x1B
+  393 000003F8 EBFFFFFE        BL               output_character
+  394 000003FC E3A0005B        MOV              r0, #'['
+
+
+
+ARM Macro Assembler    Page 9 
+
+
+  395 00000400 EBFFFFFE        BL               output_character
+  396 00000404         ; Output y value as ASCII characters
+  397 00000404 E1A00001        MOV              r0, r1
+  398 00000408 EBFFFFFE        BL               int_to_numberString
+  399 0000040C         cp_yloop
+  400 0000040C E4D40001        LDRB             r0, [r4], #1
+  401 00000410 E3500000        CMP              r0, #0x00
+  402 00000414 1BFFFFFE        BLNE             output_character
+  403 00000418 E3500000        CMP              r0, #0x00
+  404 0000041C 1AFFFFFA        BNE              cp_yloop
+  405 00000420         ; Output separating semicolon
+  406 00000420 E3A0003B        MOV              r0, #'      ;'
+  407 00000424 EBFFFFFE        BL               output_character
+  408 00000428         ; Output x value as ASCII characters
+  409 00000428 E1A00002        MOV              r0, r2
+  410 0000042C EBFFFFFE        BL               int_to_numberString
+  411 00000430         cp_xloop
+  412 00000430 E4D40001        LDRB             r0, [r4], #1
+  413 00000434 E3500000        CMP              r0, #0x00
+  414 00000438 1BFFFFFE        BLNE             output_character
+  415 0000043C E3500000        CMP              r0, #0x00
+  416 00000440 1AFFFFFA        BNE              cp_xloop
+  417 00000444         ; Output terminating capital 'H'
+  418 00000444 E3A00048        MOV              r0, #'H'
+  419 00000448 EBFFFFFE        BL               output_character
+  420 0000044C         ; Return to caller
+  421 0000044C E8BD4017        LDMFD            sp!, {r0, r1, r2, r4, lr}
+  422 00000450 E12FFF1E        BX               lr
+  423 00000454         ; ret0: arg0
+  424 00000454         ; ret1: arg1
+  425 00000454         
+  426 00000454         
+  427 00000454         
+  428 00000454         
+  429 00000454         
+  430 00000454         ; Routine cursor_down
+  431 00000454         ; Moves the cursor down one row
+  432 00000454         ; Author: ADB
+  433 00000454         ; Calls: output_string
+  434 00000454         ; No input values of addresses
+  435 00000454         cursor_down
+  436 00000454 E92D4010        STMFD            sp!, {r4, lr}
+  437 00000458 E59F41AC        LDR              r4, =cursor_down_string
+  438 0000045C EBFFFFFE        BL               output_string
+  439 00000460         ; Return to caller
+  440 00000460 E8BD4010        LDMFD            sp!, {r4, lr}
+  441 00000464 E12FFF1E        BX               lr
+  442 00000468         ; No output values or addresses
+  443 00000468         
+  444 00000468         
+  445 00000468         
+  446 00000468         
+  447 00000468         
+  448 00000468         ; Routine cursor_left
+  449 00000468         ; Moves the cursor left one column
+  450 00000468         ; Author: ADB
+  451 00000468         ; Calls: output_string
+  452 00000468         ; No input values of addresses
+  453 00000468         cursor_left
+
+
+
+ARM Macro Assembler    Page 10 
+
+
+  454 00000468 E92D4010        STMFD            sp!, {r4, lr}
+  455 0000046C E59F419C        LDR              r4, =cursor_left_string
+  456 00000470 EBFFFFFE        BL               output_string
+  457 00000474         ; Return to caller
+  458 00000474 E8BD4010        LDMFD            sp!, {r4, lr}
+  459 00000478 E12FFF1E        BX               lr
+  460 0000047C         ; No output values or addresses
+  461 0000047C         
+  462 0000047C         
+  463 0000047C         
+  464 0000047C         
+  465 0000047C         
+  466 0000047C         ; Routine cursor_right
+  467 0000047C         ; Moves the cursor right one column
+  468 0000047C         ; Author: ADB
+  469 0000047C         ; Calls: output_string
+  470 0000047C         ; No input values of addresses
+  471 0000047C         cursor_right
+  472 0000047C E92D4010        STMFD            sp!, {r4, lr}
+  473 00000480 E59F418C        LDR              r4, =cursor_right_string
+  474 00000484 EBFFFFFE        BL               output_string
+  475 00000488         ; Return to caller
+  476 00000488 E8BD4010        LDMFD            sp!, {r4, lr}
+  477 0000048C E12FFF1E        BX               lr
+  478 00000490         ; No output values or addresses
+  479 00000490         
+  480 00000490         
+  481 00000490         
+  482 00000490         
+  483 00000490         
+  484 00000490         ; Routine cursor_up
+  485 00000490         ; Moves the cursor up one row
+  486 00000490         ; Author: ADB
+  487 00000490         ; Calls: output_string
+  488 00000490         ; No input values of addresses
+  489 00000490         cursor_up
+  490 00000490 E92D4010        STMFD            sp!, {r4, lr}
+  491 00000494 E59F417C        LDR              r4, =cursor_up_string
+  492 00000498 EBFFFFFE        BL               output_string
+  493 0000049C         ; Return to caller
+  494 0000049C E8BD4010        LDMFD            sp!, {r4, lr}
+  495 000004A0 E12FFF1E        BX               lr
+  496 000004A4         ; No output values or addresses
+  497 000004A4         
+  498 000004A4         
+  499 000004A4         
+  500 000004A4         
+  501 000004A4         
+  502 000004A4         ; Routine draw_board
+  503 000004A4         ; Draws initial board outline
+  504 000004A4         ; Author: ADB
+  505 000004A4         ; Calls: output_character, println
+  506 000004A4         ; No input values or addresses
+  507 000004A4         draw_board
+  508 000004A4 E92D4011        STMFD            sp!, {r0, r4, lr}
+  509 000004A8         ; Clear screen
+  510 000004A8 E3A0000C        MOV              r0, #0x0C
+  511 000004AC EBFFFFFE        BL               output_character
+  512 000004B0         ; Output tile and HUD
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+  513 000004B0 E59F4164        LDR              r4, =title
+  514 000004B4 EBFFFFFE        BL               println
+  515 000004B8 E59F4160        LDR              r4, =HUD
+  516 000004BC EBFFFFFE        BL               println
+  517 000004C0         ; Output top edge
+  518 000004C0 E59F415C        LDR              r4, =edge
+  519 000004C4 EBFFFFFE        BL               println
+  520 000004C8         ; Loop and output blank rows
+  521 000004C8 E59F5158        LDR              r5, =row
+  522 000004CC E59F6158        LDR              r6, =zRow
+  523 000004D0 E3A02000        MOV              r2, #0      ; Initialize counte
+                                                            r
+  524 000004D4         db_loop
+  525 000004D4 E1A00002        MOV              r0, r2
+  526 000004D8 E3A01002        MOV              r1, #2
+  527 000004DC EBFFFFFE        BL               div_and_mod
+  528 000004E0 E3510000        CMP              r1, #0
+  529 000004E4 01A04005        MOVEQ            r4, r5
+  530 000004E8 11A04006        MOVNE            r4, r6
+  531 000004EC EBFFFFFE        BL               println
+  532 000004F0 E352000A        CMP              r2, #10
+  533 000004F4 E2822001        ADD              r2, r2, #1
+  534 000004F8 1AFFFFF5        BNE              db_loop
+  535 000004FC         ; Output bottom edge
+  536 000004FC E59F4120        LDR              r4, =edge
+  537 00000500 EBFFFFFE        BL               println
+  538 00000504         ; Print bomberman
+  539 00000504 E3A00000        MOV              r0, #0
+  540 00000508 E3A01000        MOV              r1, #0
+  541 0000050C E3A02042        MOV              r2, #'B'
+  542 00000510 EBFFFFFE        BL               draw_on_board
+  543 00000514         ; Return to caller
+  544 00000514 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+  545 00000518 E12FFF1E        BX               lr
+  546 0000051C         ; No output values or addresses
+  547 0000051C         
+  548 0000051C         
+  549 0000051C         
+  550 0000051C         
+  551 0000051C         ; Routine draw_bomberman
+  552 0000051C         ; Draws bomberman depending on arg0 & arg1
+  553 0000051C         ; Author: ADB
+  554 0000051C         ; arg0: x value of bomberman
+  555 0000051C         ; arg1: y value of bomberman
+  556 0000051C         draw_bomberman
+  557 0000051C E92D4007        STMFD            sp!, {r0, r1, r2, lr}
+  558 00000520 E3A02042        MOV              r2, #'B'
+  559 00000524 EBFFFFFE        BL               draw_on_board
+  560 00000528         ; Return to caller
+  561 00000528 E8BD4007        LDMFD            sp!, {r0, r1, r2, lr}
+  562 0000052C E12FFF1E        BX               lr
+  563 00000530         ; ret0: arg0
+  564 00000530         ; ret1: arg1
+  565 00000530         
+  566 00000530         
+  567 00000530         
+  568 00000530         
+  569 00000530         
+  570 00000530         ; Routine draw_on_board
+
+
+
+ARM Macro Assembler    Page 12 
+
+
+  571 00000530         ; Draws character on the board using top left corner of 
+                       the board as 0,0
+  572 00000530         ; Author: ADB
+  573 00000530         ; Calls: cursor_position, output_character
+  574 00000530         ; arg0: x value of character to be displayed
+  575 00000530         ; arg1: y value of character to be displayed
+  576 00000530         ; arg2: ASCII value of character to be displayed
+  577 00000530         draw_on_board
+  578 00000530 E92D4007        STMFD            sp!, {r0, r1, r2, lr}
+  579 00000534         ; Offset coordinates
+  580 00000534 E2800002        ADD              r0, r0, #2
+  581 00000538 E2811004        ADD              r1, r1, #4
+  582 0000053C EBFFFFFE        BL               cursor_position
+  583 00000540 E1A00002        MOV              r0, r2
+  584 00000544 EBFFFFFE        BL               output_character
+  585 00000548         ; Return to caller
+  586 00000548 E8BD4007        LDMFD            sp!, {r0, r1, r2, lr}
+  587 0000054C E12FFF1E        BX               lr
+  588 00000550         ; ret0: arg0
+  589 00000550         ; ret1: arg1
+  590 00000550         ; ret2: arg2
+  591 00000550         
+  592 00000550         
+  593 00000550         
+  594 00000550         
+  595 00000550         
+  596 00000550         ; Routine edit_array
+  597 00000550         ; Changes the value of element held at x,y to the value 
+                       passed into r2
+  598 00000550         ; Author: ADB
+  599 00000550         ; Leaf routine
+  600 00000550         ; arg0: x value of desired element
+  601 00000550         ; arg1: y value of desired element
+  602 00000550         ; arg2: value for element at x,y to be changed to
+  603 00000550         edit_array
+  604 00000550 E92D4037        STMFD            sp!, {r0, r1, r2, r4, r5, lr}
+  605 00000554         ; Normalize x & y inputs to board
+  606 00000554 E2800001        ADD              r0, r0, #1
+  607 00000558 E2811003        ADD              r1, r1, #3
+  608 0000055C         ; Store character dependent on normalized inputs
+  609 0000055C E59F40CC        LDR              r4, =array_base ; Get address o
+                                                            f base of array
+  610 00000560 E7945101        LDR              r5, [r4, r1, LSL #2] ; Get addr
+                                                            ess of desired vect
+                                                            or (y coordinate)
+  611 00000564 E7C52000        STRB             r2, [r5, r0] ; Put desired valu
+                                                            e into vector (x co
+                                                            ordinate)
+  612 00000568         ; Return to caller
+  613 00000568 E8BD4037        LDMFD            sp!, {r0 ,r1, r2, r4, r5, lr}
+  614 0000056C E12FFF1E        BX               lr
+  615 00000570         ; ret0: arg0
+  616 00000570         ; ret1: arg1
+  617 00000570         ; ret2: arg2
+  618 00000570         
+  619 00000570         
+  620 00000570         
+  621 00000570         
+  622 00000570         
+
+
+
+ARM Macro Assembler    Page 13 
+
+
+  623 00000570         ; Routine populate_array
+  624 00000570         ; Fills array used for managing character positions on s
+                       creen
+  625 00000570         ; Author: ADB
+  626 00000570         ; Calls: store_string
+  627 00000570         ; No input arguments or addresses
+  628 00000570         populate_array
+  629 00000570 E92D41F7        STMFD            sp!, {r0-r2, r4-r8, lr}
+  630 00000574         ; Get base address of array
+  631 00000574 E59F60B4        LDR              r6, =array_base
+  632 00000578         ; Store title string
+  633 00000578 E59F409C        LDR              r4, =title
+  634 0000057C E4965004        LDR              r5, [r6], #4
+  635 00000580 EBFFFFFE        BL               store_string
+  636 00000584         ; Store HUD string
+  637 00000584 E59F4094        LDR              r4, =HUD
+  638 00000588 E4965004        LDR              r5, [r6], #4
+  639 0000058C EBFFFFFE        BL               store_string
+  640 00000590         ; Store edge string
+  641 00000590 E59F408C        LDR              r4, =edge
+  642 00000594 E4965004        LDR              r5, [r6], #4
+  643 00000598 EBFFFFFE        BL               store_string
+  644 0000059C         ; Loop and store row or zRow depending on mod of counter
+                       
+  645 0000059C E3A02000        MOV              r2, #0      ; Initialize counte
+                                                            r
+  646 000005A0 E59F7080        LDR              r7, =row
+  647 000005A4 E59F8080        LDR              r8, =zRow
+  648 000005A8         pa_loop
+  649 000005A8 E1A00002        MOV              r0, r2
+  650 000005AC E3A01002        MOV              r1, #2
+  651 000005B0 EBFFFFFE        BL               div_and_mod
+  652 000005B4 E3510000        CMP              r1, #0
+  653 000005B8 01A04007        MOVEQ            r4, r7
+  654 000005BC 11A04008        MOVNE            r4, r8
+  655 000005C0 E4965004        LDR              r5, [r6], #4
+  656 000005C4 EBFFFFFE        BL               store_string
+  657 000005C8 E352000A        CMP              r2, #10
+  658 000005CC E2822001        ADD              r2, r2, #1
+  659 000005D0 1AFFFFF4        BNE              pa_loop
+  660 000005D4         ; Store edge string
+  661 000005D4 E59F4048        LDR              r4, =edge
+  662 000005D8 E4965004        LDR              r5, [r6], #4
+  663 000005DC EBFFFFFE        BL               store_string
+  664 000005E0         ; Return to caller
+  665 000005E0 E8BD41F7        LDMFD            sp!, {r0-r2, r4-r8, lr}
+  666 000005E4 E12FFF1E        BX               lr
+  667 000005E8         ; No output arguments or addresses
+  668 000005E8         
+  669 000005E8         
+  670 000005E8         
+  671 000005E8         
+  672 000005E8         
+  673 000005E8         ; Routine read_array
+  674 000005E8         ; Returns the value of element held at x,y
+  675 000005E8         ; Author: ADB
+  676 000005E8         ; Leaf routine
+  677 000005E8         ; arg0: x value of desired element
+  678 000005E8         ; arg1: y value of desired element
+
+
+
+ARM Macro Assembler    Page 14 
+
+
+  679 000005E8         read_array
+  680 000005E8 E92D4032        STMFD            sp!, {r1, r4, r5, lr}
+  681 000005EC         ; Normalize x & y inputs to board
+  682 000005EC E2800001        ADD              r0, r0, #1
+  683 000005F0 E2811003        ADD              r1, r1, #3
+  684 000005F4         ; Get data based on normalized inputs
+  685 000005F4 E59F4034        LDR              r4, =array_base ; Get address o
+                                                            f base of array
+  686 000005F8 E7945101        LDR              r5, [r4, r1, LSL #2] ; Get addr
+                                                            ess of desired vect
+                                                            or (y coordinate)
+  687 000005FC E7D50000        LDRB             r0, [r5, r0] ; Get desired valu
+                                                            e from vector (x co
+                                                            ordinate)
+  688 00000600         ; Return to caller
+  689 00000600 E8BD4032        LDMFD            sp!, {r1, r4, r5, lr}
+  690 00000604 E12FFF1E        BX               lr
+  691 00000608         ; arg0: ASCII value of current 
+  692 00000608         
+  693 00000608         
+  694 00000608         
+  695 00000608         
+  696 00000608         
+  697 00000608                 END
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+Command Line: --debug --xref --apcs=interwork -ographics_library.o -IC:\Keil\AR
+M\INC -IC:\Keil\ARM\INC\Philips --predefine="__EVAL SETA 1" --list=graphics_lib
+rary.lst graphics_library.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+HUD 0000001C
+
+Symbol: HUD
+   Definitions
+      At line 36 in file graphics_library.s
+   Uses
+      At line 515 in file graphics_library.s
+      At line 637 in file graphics_library.s
+
+array_base 00000230
+
+Symbol: array_base
+   Definitions
+      At line 169 in file graphics_library.s
+   Uses
+      At line 609 in file graphics_library.s
+      At line 631 in file graphics_library.s
+      At line 685 in file graphics_library.s
+
+brick_setup 00000294
+
+Symbol: brick_setup
+   Definitions
+      At line 210 in file graphics_library.s
+   Uses
+      At line 3 in file graphics_library.s
+Comment: brick_setup used once
+bs_first_short_row 000002DC
+
+Symbol: bs_first_short_row
+   Definitions
+      At line 235 in file graphics_library.s
+   Uses
+      At line 223 in file graphics_library.s
+      At line 242 in file graphics_library.s
+
+bs_loop 000002A4
+
+Symbol: bs_loop
+   Definitions
+      At line 216 in file graphics_library.s
+   Uses
+      At line 258 in file graphics_library.s
+Comment: bs_loop used once
+bs_normal_loop 000002C0
+
+Symbol: bs_normal_loop
+   Definitions
+      At line 227 in file graphics_library.s
+   Uses
+      At line 233 in file graphics_library.s
+Comment: bs_normal_loop used once
+bs_other_short_rows 000002FC
+
+Symbol: bs_other_short_rows
+   Definitions
+      At line 244 in file graphics_library.s
+   Uses
+      At line 225 in file graphics_library.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 251 in file graphics_library.s
+
+change_character 00000338
+
+Symbol: change_character
+   Definitions
+      At line 275 in file graphics_library.s
+   Uses
+      At line 4 in file graphics_library.s
+Comment: change_character used once
+change_score_value 00000350
+
+Symbol: change_score_value
+   Definitions
+      At line 296 in file graphics_library.s
+   Uses
+      At line 5 in file graphics_library.s
+Comment: change_score_value used once
+change_time_value 00000380
+
+Symbol: change_time_value
+   Definitions
+      At line 324 in file graphics_library.s
+   Uses
+      At line 6 in file graphics_library.s
+Comment: change_time_value used once
+check_location 000003B0
+
+Symbol: check_location
+   Definitions
+      At line 350 in file graphics_library.s
+   Uses
+      At line 7 in file graphics_library.s
+      At line 231 in file graphics_library.s
+      At line 240 in file graphics_library.s
+      At line 249 in file graphics_library.s
+
+clear_chars 0000026C
+
+Symbol: clear_chars
+   Definitions
+      At line 190 in file graphics_library.s
+   Uses
+      At line 371 in file graphics_library.s
+Comment: clear_chars used once
+clear_screen 000003CC
+
+Symbol: clear_screen
+   Definitions
+      At line 369 in file graphics_library.s
+   Uses
+      At line 8 in file graphics_library.s
+Comment: clear_screen used once
+cp_xloop 00000430
+
+Symbol: cp_xloop
+   Definitions
+      At line 411 in file graphics_library.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 416 in file graphics_library.s
+Comment: cp_xloop used once
+cp_yloop 0000040C
+
+Symbol: cp_yloop
+   Definitions
+      At line 399 in file graphics_library.s
+   Uses
+      At line 404 in file graphics_library.s
+Comment: cp_yloop used once
+cursor_down 00000454
+
+Symbol: cursor_down
+   Definitions
+      At line 435 in file graphics_library.s
+   Uses
+      At line 10 in file graphics_library.s
+Comment: cursor_down used once
+cursor_down_string 0000027C
+
+Symbol: cursor_down_string
+   Definitions
+      At line 194 in file graphics_library.s
+   Uses
+      At line 437 in file graphics_library.s
+Comment: cursor_down_string used once
+cursor_left 00000468
+
+Symbol: cursor_left
+   Definitions
+      At line 453 in file graphics_library.s
+   Uses
+      At line 11 in file graphics_library.s
+Comment: cursor_left used once
+cursor_left_string 0000028C
+
+Symbol: cursor_left_string
+   Definitions
+      At line 198 in file graphics_library.s
+   Uses
+      At line 455 in file graphics_library.s
+Comment: cursor_left_string used once
+cursor_position 000003EC
+
+Symbol: cursor_position
+   Definitions
+      At line 388 in file graphics_library.s
+   Uses
+      At line 9 in file graphics_library.s
+      At line 277 in file graphics_library.s
+      At line 303 in file graphics_library.s
+      At line 331 in file graphics_library.s
+      At line 375 in file graphics_library.s
+      At line 582 in file graphics_library.s
+
+cursor_right 0000047C
+
+Symbol: cursor_right
+   Definitions
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 471 in file graphics_library.s
+   Uses
+      At line 12 in file graphics_library.s
+Comment: cursor_right used once
+cursor_right_string 00000284
+
+Symbol: cursor_right_string
+   Definitions
+      At line 196 in file graphics_library.s
+   Uses
+      At line 473 in file graphics_library.s
+Comment: cursor_right_string used once
+cursor_up 00000490
+
+Symbol: cursor_up
+   Definitions
+      At line 489 in file graphics_library.s
+   Uses
+      At line 13 in file graphics_library.s
+Comment: cursor_up used once
+cursor_up_string 00000274
+
+Symbol: cursor_up_string
+   Definitions
+      At line 192 in file graphics_library.s
+   Uses
+      At line 491 in file graphics_library.s
+Comment: cursor_up_string used once
+db_loop 000004D4
+
+Symbol: db_loop
+   Definitions
+      At line 524 in file graphics_library.s
+   Uses
+      At line 534 in file graphics_library.s
+Comment: db_loop used once
+draw_board 000004A4
+
+Symbol: draw_board
+   Definitions
+      At line 507 in file graphics_library.s
+   Uses
+      At line 14 in file graphics_library.s
+Comment: draw_board used once
+draw_bomberman 0000051C
+
+Symbol: draw_bomberman
+   Definitions
+      At line 556 in file graphics_library.s
+   Uses
+      At line 15 in file graphics_library.s
+Comment: draw_bomberman used once
+draw_on_board 00000530
+
+Symbol: draw_on_board
+   Definitions
+      At line 577 in file graphics_library.s
+   Uses
+      At line 16 in file graphics_library.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 254 in file graphics_library.s
+      At line 542 in file graphics_library.s
+      At line 559 in file graphics_library.s
+
+edge 00000038
+
+Symbol: edge
+   Definitions
+      At line 38 in file graphics_library.s
+   Uses
+      At line 518 in file graphics_library.s
+      At line 536 in file graphics_library.s
+      At line 641 in file graphics_library.s
+      At line 661 in file graphics_library.s
+
+edit_array 00000550
+
+Symbol: edit_array
+   Definitions
+      At line 603 in file graphics_library.s
+   Uses
+      At line 17 in file graphics_library.s
+      At line 255 in file graphics_library.s
+
+graphics_library 00000000
+
+Symbol: graphics_library
+   Definitions
+      At line 1 in file graphics_library.s
+   Uses
+      None
+Comment: graphics_library unused
+loop_check 00000318
+
+Symbol: loop_check
+   Definitions
+      At line 252 in file graphics_library.s
+   Uses
+      At line 234 in file graphics_library.s
+      At line 243 in file graphics_library.s
+
+pa_loop 000005A8
+
+Symbol: pa_loop
+   Definitions
+      At line 648 in file graphics_library.s
+   Uses
+      At line 659 in file graphics_library.s
+Comment: pa_loop used once
+populate_array 00000570
+
+Symbol: populate_array
+   Definitions
+      At line 628 in file graphics_library.s
+   Uses
+      At line 18 in file graphics_library.s
+Comment: populate_array used once
+read_array 000005E8
+
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: read_array
+   Definitions
+      At line 679 in file graphics_library.s
+   Uses
+      At line 19 in file graphics_library.s
+      At line 353 in file graphics_library.s
+
+row 00000054
+
+Symbol: row
+   Definitions
+      At line 40 in file graphics_library.s
+   Uses
+      At line 521 in file graphics_library.s
+      At line 646 in file graphics_library.s
+
+title 00000000
+
+Symbol: title
+   Definitions
+      At line 34 in file graphics_library.s
+   Uses
+      At line 513 in file graphics_library.s
+      At line 633 in file graphics_library.s
+
+vec_0 0000008C
+
+Symbol: vec_0
+   Definitions
+      At line 46 in file graphics_library.s
+   Uses
+      At line 169 in file graphics_library.s
+Comment: vec_0 used once
+vec_1 000000A8
+
+Symbol: vec_1
+   Definitions
+      At line 55 in file graphics_library.s
+   Uses
+      At line 170 in file graphics_library.s
+Comment: vec_1 used once
+vec_10 000001A4
+
+Symbol: vec_10
+   Definitions
+      At line 127 in file graphics_library.s
+   Uses
+      At line 179 in file graphics_library.s
+Comment: vec_10 used once
+vec_11 000001C0
+
+Symbol: vec_11
+   Definitions
+      At line 135 in file graphics_library.s
+   Uses
+      At line 180 in file graphics_library.s
+Comment: vec_11 used once
+vec_12 000001DC
+
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: vec_12
+   Definitions
+      At line 143 in file graphics_library.s
+   Uses
+      At line 181 in file graphics_library.s
+Comment: vec_12 used once
+vec_13 000001F8
+
+Symbol: vec_13
+   Definitions
+      At line 151 in file graphics_library.s
+   Uses
+      At line 182 in file graphics_library.s
+Comment: vec_13 used once
+vec_14 00000214
+
+Symbol: vec_14
+   Definitions
+      At line 159 in file graphics_library.s
+   Uses
+      At line 183 in file graphics_library.s
+Comment: vec_14 used once
+vec_2 000000C4
+
+Symbol: vec_2
+   Definitions
+      At line 63 in file graphics_library.s
+   Uses
+      At line 171 in file graphics_library.s
+Comment: vec_2 used once
+vec_3 000000E0
+
+Symbol: vec_3
+   Definitions
+      At line 71 in file graphics_library.s
+   Uses
+      At line 172 in file graphics_library.s
+Comment: vec_3 used once
+vec_4 000000FC
+
+Symbol: vec_4
+   Definitions
+      At line 79 in file graphics_library.s
+   Uses
+      At line 173 in file graphics_library.s
+Comment: vec_4 used once
+vec_5 00000118
+
+Symbol: vec_5
+   Definitions
+      At line 87 in file graphics_library.s
+   Uses
+      At line 174 in file graphics_library.s
+Comment: vec_5 used once
+vec_6 00000134
+
+Symbol: vec_6
+   Definitions
+      At line 95 in file graphics_library.s
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 175 in file graphics_library.s
+Comment: vec_6 used once
+vec_7 00000150
+
+Symbol: vec_7
+   Definitions
+      At line 103 in file graphics_library.s
+   Uses
+      At line 176 in file graphics_library.s
+Comment: vec_7 used once
+vec_8 0000016C
+
+Symbol: vec_8
+   Definitions
+      At line 111 in file graphics_library.s
+   Uses
+      At line 177 in file graphics_library.s
+Comment: vec_8 used once
+vec_9 00000188
+
+Symbol: vec_9
+   Definitions
+      At line 119 in file graphics_library.s
+   Uses
+      At line 178 in file graphics_library.s
+Comment: vec_9 used once
+zRow 00000070
+
+Symbol: zRow
+   Definitions
+      At line 42 in file graphics_library.s
+   Uses
+      At line 522 in file graphics_library.s
+      At line 647 in file graphics_library.s
+
+53 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+div_and_mod 00000000
+
+Symbol: div_and_mod
+   Definitions
+      At line 27 in file graphics_library.s
+   Uses
+      At line 527 in file graphics_library.s
+      At line 651 in file graphics_library.s
+
+get_rand 00000000
+
+Symbol: get_rand
+   Definitions
+      At line 28 in file graphics_library.s
+   Uses
+      At line 219 in file graphics_library.s
+      At line 229 in file graphics_library.s
+      At line 237 in file graphics_library.s
+      At line 246 in file graphics_library.s
+
+int_to_numberString 00000000
+
+Symbol: int_to_numberString
+   Definitions
+      At line 22 in file graphics_library.s
+   Uses
+      At line 306 in file graphics_library.s
+      At line 334 in file graphics_library.s
+      At line 398 in file graphics_library.s
+      At line 410 in file graphics_library.s
+
+output_character 00000000
+
+Symbol: output_character
+   Definitions
+      At line 21 in file graphics_library.s
+   Uses
+      At line 279 in file graphics_library.s
+      At line 393 in file graphics_library.s
+      At line 395 in file graphics_library.s
+      At line 402 in file graphics_library.s
+      At line 407 in file graphics_library.s
+      At line 414 in file graphics_library.s
+      At line 419 in file graphics_library.s
+      At line 511 in file graphics_library.s
+      At line 584 in file graphics_library.s
+
+output_string 00000000
+
+Symbol: output_string
+   Definitions
+      At line 23 in file graphics_library.s
+   Uses
+      At line 309 in file graphics_library.s
+      At line 337 in file graphics_library.s
+      At line 372 in file graphics_library.s
+      At line 438 in file graphics_library.s
+      At line 456 in file graphics_library.s
+      At line 474 in file graphics_library.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+      At line 492 in file graphics_library.s
+
+println 00000000
+
+Symbol: println
+   Definitions
+      At line 25 in file graphics_library.s
+   Uses
+      At line 514 in file graphics_library.s
+      At line 516 in file graphics_library.s
+      At line 519 in file graphics_library.s
+      At line 531 in file graphics_library.s
+      At line 537 in file graphics_library.s
+
+set_figs 00000000
+
+Symbol: set_figs
+   Definitions
+      At line 24 in file graphics_library.s
+   Uses
+      At line 308 in file graphics_library.s
+      At line 336 in file graphics_library.s
+
+store_string 00000000
+
+Symbol: store_string
+   Definitions
+      At line 26 in file graphics_library.s
+   Uses
+      At line 635 in file graphics_library.s
+      At line 639 in file graphics_library.s
+      At line 643 in file graphics_library.s
+      At line 656 in file graphics_library.s
+      At line 663 in file graphics_library.s
+
+8 symbols
+383 symbols in table

@@ -1,0 +1,3237 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000                 AREA             main, CODE, READWRITE
+    2 00000000         ; IMPORTS
+    3 00000000         ; Import from general_library
+    4 00000000                 IMPORT           div_and_mod
+    5 00000000                 IMPORT           edit_register
+    6 00000000         ; Import from hardware_library
+    7 00000000                 IMPORT           pin_clear
+    8 00000000                 IMPORT           RGB_LED
+    9 00000000                 IMPORT           rgb_set
+   10 00000000                 IMPORT           seg_pattern_display
+   11 00000000                 IMPORT           read_push_btns
+   12 00000000                 IMPORT           display_digit
+   13 00000000                 IMPORT           LEDs
+   14 00000000                 IMPORT           uart_init
+   15 00000000                 IMPORT           GPIO_init
+   16 00000000         ; Import from string_library
+   17 00000000                 IMPORT           cmp_str
+   18 00000000                 IMPORT           numberString_to_int
+   19 00000000                 IMPORT           int_to_numberString
+   20 00000000                 IMPORT           newline
+   21 00000000                 IMPORT           output_character
+   22 00000000                 IMPORT           output_string
+   23 00000000                 IMPORT           println
+   24 00000000                 IMPORT           prompt
+   25 00000000                 IMPORT           read_character
+   26 00000000                 IMPORT           read_string
+   27 00000000                 IMPORT           reverse_string
+   28 00000000                 IMPORT           string_length
+   29 00000000         ; Import from graphics_library
+   30 00000000                 IMPORT           brick_setup
+   31 00000000                 IMPORT           change_character
+   32 00000000                 IMPORT           change_score_value
+   33 00000000                 IMPORT           change_time_value
+   34 00000000                 IMPORT           clear_screen
+   35 00000000                 IMPORT           cursor_position
+   36 00000000                 IMPORT           cursor_down
+   37 00000000                 IMPORT           cursor_left
+   38 00000000                 IMPORT           cursor_right
+   39 00000000                 IMPORT           cursor_up
+   40 00000000                 IMPORT           draw_board
+   41 00000000                 IMPORT           draw_bomberman
+   42 00000000                 IMPORT           draw_on_board
+   43 00000000                 IMPORT           check_location
+   44 00000000                 IMPORT           populate_array
+   45 00000000                 IMPORT           edit_array
+   46 00000000                 IMPORT           read_array
+   47 00000000         ; Exports
+   48 00000000                 EXPORT           lab7
+   49 00000000                 EXPORT           timer_init
+   50 00000000                 EXPORT           FIQ_Handler
+   51 00000000                 EXPORT           interrupt_init
+   52 00000000                 EXPORT           get_rand
+   53 00000000         
+   54 00000000 E0028000 
+                       IO0PIN  EQU              0xE0028000
+   55 00000000                 ALIGN
+   56 00000000 E0004018 
+                       T0MR0   EQU              0xE0004018
+   57 00000000                 ALIGN
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   58 00000000 E0008018 
+                       T1MR0   EQU              0xE0008018
+   59 00000000                 ALIGN
+   60 00000000 E0004014 
+                       T0MCR   EQU              0xE0004014
+   61 00000000                 ALIGN
+   62 00000000 E0008014 
+                       T1MCR   EQU              0xE0008014
+   63 00000000                 ALIGN
+   64 00000000         
+   65 00000000 00000000 
+                       game_status
+                               DCD              0x00000000
+   66 00000004                 ALIGN
+   67 00000004 00000000 
+                       level   DCD              0X00000000
+   68 00000008                 ALIGN
+   69 00000008 00000000 
+                       score   DCD              0x00000000
+   70 0000000C                 ALIGN
+   71 0000000C 00000078 
+                       time    DCD              0x00000078
+   72 00000010                 ALIGN
+   73 00000010 00000000 
+                       life_count
+                               DCD              0x00000000
+   74 00000014                 ALIGN
+   75 00000014 00000000 
+                       lives   DCD              0x00000000
+   76 00000018                 ALIGN
+   77 00000018 00000000 
+                       bomb_status
+                               DCD              0x00000000
+   78 0000001C                 ALIGN
+   79 0000001C 00000000 
+                       rgb_status
+                               DCD              0x00000000
+   80 00000020                 ALIGN
+   81 00000020         
+   82 00000020 00000000 
+                       rand_character
+                               DCD              0x00000000
+   83 00000024                 ALIGN
+   84 00000024 00000000 
+                       time_flag
+                               DCD              0x00000000
+   85 00000028                 ALIGN
+   86 00000028 00000000 
+                       player_input
+                               DCD              0x00000000
+   87 0000002C                 ALIGN
+   88 0000002C 00000000 
+                       current_direction
+                               DCD              0x00000000
+   89 00000030                 ALIGN
+   90 00000030         
+   91 00000030         
+   92 00000030 00000000 
+                       bomberman_x
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+                               DCD              0x00000000
+   93 00000034                 ALIGN
+   94 00000034 00000000 
+                       bomberman_y
+                               DCD              0x00000000
+   95 00000038                 ALIGN
+   96 00000038 00000000 
+                       bomberman_status
+                               DCD              0x00000000
+   97 0000003C                 ALIGN
+   98 0000003C 00000016 
+                       slow_enemy_1_x
+                               DCD              0x00000016
+   99 00000040                 ALIGN
+  100 00000040 00000000 
+                       slow_enemy_1_y
+                               DCD              0x00000000
+  101 00000044                 ALIGN
+  102 00000044 00000000 
+                       slow_enemy_1_status
+                               DCD              0x00000000
+  103 00000048                 ALIGN
+  104 00000048 00000000 
+                       slow_enemy_2_x
+                               DCD              0x00000000
+  105 0000004C                 ALIGN
+  106 0000004C 0000000A 
+                       slow_enemy_2_y
+                               DCD              0x0000000A
+  107 00000050                 ALIGN
+  108 00000050 00000000 
+                       slow_enemy_2_status
+                               DCD              0x00000000
+  109 00000054                 ALIGN
+  110 00000054 00000016 
+                       fast_enemy_x
+                               DCD              0x00000016
+  111 00000058                 ALIGN
+  112 00000058 0000000A 
+                       fast_enemy_y
+                               DCD              0x0000000A
+  113 0000005C                 ALIGN
+  114 0000005C 00000000 
+                       fast_enemy_status
+                               DCD              0x00000000
+  115 00000060                 ALIGN
+  116 00000060 00000000 
+                       bomb_x  DCD              0x00000000
+  117 00000064                 ALIGN
+  118 00000064 00000000 
+                       bomb_y  DCD              0x00000000
+  119 00000068                 ALIGN
+  120 00000068         
+  121 00000068         
+  122 00000068 50 72 65 
+              73 73 20 
+              61 6E 79 
+              20 63 68 
+              61 72 61 
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+              63 74 65 
+              72 2E 2E 
+              2E 00    welcome =                "Press any character...",0
+  123 0000007F 00              ALIGN
+  124 00000080 59 6F 75 
+              20 6C 6F 
+              73 65 21 
+              00       game_over_string
+                               =                "You lose!",0
+  125 0000008A 00 00           ALIGN
+  126 0000008C 1B 5B 32 
+              4A 00    clear_chars
+                               =                0x1B,"[2J",0
+  127 00000091 00 00 00        ALIGN
+  128 00000094         
+  129 00000094         
+  130 00000094         
+  131 00000094         speed_array
+  132 00000094 00465000        DCD              0x00465000  ; Level 1 speed
+  133 00000098 00384000        DCD              0x00384000  ; Level 2 speed
+  134 0000009C 002A3000        DCD              0x002A3000  ; Level 3+ speed
+  135 000000A0         
+  136 000000A0         
+  137 000000A0         lab7
+  138 000000A0 E92D4000        STMFD            sp!, {lr}
+  139 000000A4         ; Program initalization routine is inline and starts her
+                       e
+  140 000000A4         ; Start by initializing hardware
+  141 000000A4 EBFFFFFE        BL               GPIO_init
+  142 000000A8 EBFFFFFE        BL               uart_init
+  143 000000AC         ; Initialize game settings
+  144 000000AC         ; Initialize game status to 0
+  145 000000AC E59F4E5C        LDR              r4, =game_status
+  146 000000B0 E3A00000        MOV              r0, #0
+  147 000000B4 E5840000        STR              r0, [r4]
+  148 000000B8 EB0002B0        BL               RGB_update
+  149 000000BC         ; Initialize time to 0
+  150 000000BC E59F4E50        LDR              r4, =time
+  151 000000C0 E3A00078        MOV              r0, #120
+  152 000000C4 E5840000        STR              r0, [r4]
+  153 000000C8         ; Initialize level to 0
+  154 000000C8 E59F4E48        LDR              r4, =level
+  155 000000CC E3A00000        MOV              r0, #0
+  156 000000D0 E5840000        STR              r0, [r4]
+  157 000000D4 EB0002BD        BL               seg_level
+  158 000000D8         ; Initialize score to 0
+  159 000000D8 E59F4E3C        LDR              r4, =score
+  160 000000DC E3A00000        MOV              r0, #0
+  161 000000E0 E5840000        STR              r0, [r4]
+  162 000000E4         ; Set all statuses to 1
+  163 000000E4         ; Initialize bomberman_status to 1
+  164 000000E4 E59F4E34        LDR              r4, =bomberman_status
+  165 000000E8 E3A00001        MOV              r0, #1
+  166 000000EC E5840000        STR              r0, [r4]
+  167 000000F0         ; Initialize slow_enemy_1_status to 1
+  168 000000F0 E59F4E2C        LDR              r4, =slow_enemy_1_status
+  169 000000F4 E3A00001        MOV              r0, #1
+  170 000000F8 E5840000        STR              r0, [r4]
+  171 000000FC         ; Initialize slow_enemy_2_status to 1
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  172 000000FC E59F4E24        LDR              r4, =slow_enemy_2_status
+  173 00000100 E3A00001        MOV              r0, #1
+  174 00000104 E5840000        STR              r0, [r4]
+  175 00000108         ; Initialize fast_enemy_status to 1
+  176 00000108 E59F4E1C        LDR              r4, =fast_enemy_status
+  177 0000010C E3A00001        MOV              r0, #1
+  178 00000110 E5840000        STR              r0, [r4]
+  179 00000114         ; Initialize number of lives to bit pattern for (15)
+  180 00000114 E59F4E14        LDR              r4, =life_count
+  181 00000118 E3A0000F        MOV              r0, #15
+  182 0000011C E5840000        STR              r0, [r4]
+  183 00000120 EBFFFFFE        BL               LEDs
+  184 00000124         ; Draw welcome screen
+  185 00000124 EB00004F        BL               draw_welcome
+  186 00000128         ; Start the timers and interrupts
+  187 00000128 EBFFFFFE        BL               interrupt_init
+  188 0000012C EBFFFFFE        BL               timer_init
+  189 00000130         ; call level_init
+  190 00000130 EB000002        BL               level_init
+  191 00000134         while_true                           ; Loop forever whil
+                                                            e the interrupts ha
+                                                            ndle the rest
+  192 00000134 EAFFFFFE        B                while_true
+  193 00000138         ; Return to caller
+  194 00000138 E8BD4000        LDMFD            sp!, {lr}
+  195 0000013C E12FFF1E        BX               lr
+  196 00000140         
+  197 00000140         
+  198 00000140         level_init
+  199 00000140 E92D4077        STMFD            sp!, {r0, r1, r2, r4, r5, r6, l
+r}
+  200 00000144         ; Increment level
+  201 00000144 E59F4DCC        LDR              r4, =level
+  202 00000148 E5940000        LDR              r0, [r4]
+  203 0000014C E2800001        ADD              r0, r0, #1
+  204 00000150 E5840000        STR              r0, [r4]
+  205 00000154 EB00029D        BL               seg_level
+  206 00000158         ; Initialize character positions
+  207 00000158         ; Initialize bomberman's position
+  208 00000158 E59F4DD4        LDR              r4, =bomberman_x
+  209 0000015C E59F5DD4        LDR              r5, =bomberman_y
+  210 00000160 E3A00000        MOV              r0, #0
+  211 00000164 E5840000        STR              r0, [r4]
+  212 00000168 E5850000        STR              r0, [r5]
+  213 0000016C         ; Initialize bomberman_status to 1
+  214 0000016C E59F4DAC        LDR              r4, =bomberman_status
+  215 00000170 E3A00001        MOV              r0, #1
+  216 00000174 E5840000        STR              r0, [r4]
+  217 00000178         ; Initialize slowone's position
+  218 00000178 E59F4DBC        LDR              r4, =slow_enemy_1_x
+  219 0000017C E3A00016        MOV              r0, #22
+  220 00000180 E5840000        STR              r0, [r4]
+  221 00000184 E59F4DB4        LDR              r4, =slow_enemy_1_y
+  222 00000188 E3A00000        MOV              r0, #0
+  223 0000018C E5840000        STR              r0, [r4]
+  224 00000190         ; Initialize slow_enemy_1_status to 1
+  225 00000190 E59F4D8C        LDR              r4, =slow_enemy_1_status
+  226 00000194 E3A00001        MOV              r0, #1
+  227 00000198 E5840000        STR              r0, [r4]
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  228 0000019C         ; Initialize slowtwo's position
+  229 0000019C E59F4DA0        LDR              r4, =slow_enemy_2_x
+  230 000001A0 E3A00000        MOV              r0, #0
+  231 000001A4 E5840000        STR              r0, [r4]
+  232 000001A8 E59F4D98        LDR              r4, =slow_enemy_2_y
+  233 000001AC E3A0000A        MOV              r0, #10
+  234 000001B0 E5840000        STR              r0, [r4]
+  235 000001B4         ; Initialize slow_enemy_2_status to 1
+  236 000001B4 E59F4D6C        LDR              r4, =slow_enemy_2_status
+  237 000001B8 E3A00001        MOV              r0, #1
+  238 000001BC E5840000        STR              r0, [r4]
+  239 000001C0         ; Initialize fastone's position
+  240 000001C0 E59F4D84        LDR              r4, =fast_enemy_x
+  241 000001C4 E3A00016        MOV              r0, #22
+  242 000001C8 E5840000        STR              r0, [r4]
+  243 000001CC E59F4D7C        LDR              r4, =fast_enemy_y
+  244 000001D0 E3A0000A        MOV              r0, #10
+  245 000001D4 E5840000        STR              r0, [r4]
+  246 000001D8         ; Initialize fast_enemy_status to 1
+  247 000001D8 E59F4D4C        LDR              r4, =fast_enemy_status
+  248 000001DC E3A00001        MOV              r0, #1
+  249 000001E0 E5840000        STR              r0, [r4]
+  250 000001E4         ; Initialize game status to 1
+  251 000001E4 E59F4D24        LDR              r4, =game_status
+  252 000001E8 E3A00001        MOV              r0, #1
+  253 000001EC E5840000        STR              r0, [r4]
+  254 000001F0 EB000262        BL               RGB_update
+  255 000001F4         ; Make sure bomb_status is 0
+  256 000001F4 E59F4D58        LDR              r4, =bomb_status
+  257 000001F8 E3A00000        MOV              r0, #0
+  258 000001FC E5840000        STR              r0, [r4]
+  259 00000200         ; Increase speed
+  260 00000200 E59F4D10        LDR              r4, =level
+  261 00000204 E5940000        LDR              r0, [r4]
+  262 00000208 E3500003        CMP              r0, #3
+  263 0000020C C3A00003        MOVGT            r0, #3
+  264 00000210 E2400001        SUB              r0, r0, #1
+  265 00000214 E59F5D3C        LDR              r5, =speed_array
+  266 00000218 E7951100        LDR              r1, [r5, r0, LSL #2]
+  267 0000021C E59F6D38        LDR              r6, =T1MR0
+  268 00000220 E5861000        STR              r1, [r6]
+  269 00000224         ; Reset board and tracking array
+  270 00000224 EBFFFFFE        BL               draw_board
+  271 00000228 EBFFFFFE        BL               populate_array
+  272 0000022C         ; Update score and time HUDs
+  273 0000022C E59F4CE8        LDR              r4, =score
+  274 00000230 E5940000        LDR              r0, [r4]
+  275 00000234 EBFFFFFE        BL               change_score_value
+  276 00000238 E59F4CD4        LDR              r4, =time
+  277 0000023C E5940000        LDR              r0, [r4]
+  278 00000240 EBFFFFFE        BL               change_time_value
+  279 00000244         ; Randomize bricks
+  280 00000244 E3A01003        MOV              r1, #3
+  281 00000248 E59F4CC8        LDR              r4, =level
+  282 0000024C E5942000        LDR              r2, [r4]
+  283 00000250 E2422001        SUB              r2, r2, #1
+  284 00000254 E0000291        MUL              r0, r1, r2
+  285 00000258 E280000A        ADD              r0, r0, #10
+  286 0000025C EBFFFFFE        BL               brick_setup
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  287 00000260         ; Return to caller
+  288 00000260 E8BD4077        LDMFD            sp!, {r0, r1, r2, r4, r5, r6, l
+r}
+  289 00000264 E12FFF1E        BX               lr
+  290 00000268         
+  291 00000268         
+  292 00000268         
+  293 00000268         draw_welcome
+  294 00000268 E92D4011        STMFD            sp!, {r0 ,r4, lr}
+  295 0000026C EBFFFFFE        BL               clear_screen
+  296 00000270 E59F4CE8        LDR              r4, =welcome
+  297 00000274 EBFFFFFE        BL               println
+  298 00000278 EBFFFFFE        BL               read_character
+  299 0000027C E59F4CE0        LDR              r4, =rand_character
+  300 00000280 E5840000        STR              r0, [r4]
+  301 00000284         ; Return to caller
+  302 00000284 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+  303 00000288 E12FFF1E        BX               lr
+  304 0000028C         
+  305 0000028C         
+  306 0000028C         
+  307 0000028C         ; routine to update bomberman on board
+  308 0000028C         ; Uses x and y coordinates in memory
+  309 0000028C         ; Author: MTH
+  310 0000028C         ; No inputs
+  311 0000028C         bomberman_update
+  312 0000028C E92D4C7F        STMFD            sp!, {r0-r6, r10, r11, lr}
+  313 00000290         ; Load bomberman x and y coordinates
+  314 00000290 E59F4C9C        LDR              r4, =bomberman_x
+  315 00000294 E5940000        LDR              r0, [r4]
+  316 00000298 E59F5C98        LDR              r5, =bomberman_y
+  317 0000029C E5951000        LDR              r1, [r5]
+  318 000002A0         ; Load last direction user inputed
+  319 000002A0 E59F6CC0        LDR              r6, =current_direction
+  320 000002A4 E5963000        LDR              r3, [r6]
+  321 000002A8         ; Check if input was w
+  322 000002A8 E3530077        CMP              r3, #'w'
+  323 000002AC 02411001        SUBEQ            r1, r1, #1
+  324 000002B0 0A00000B        BEQ              bu_cont
+  325 000002B4         ; Check if input was s
+  326 000002B4 E3530073        CMP              r3, #'s'
+  327 000002B8 02811001        ADDEQ            r1, r1, #1
+  328 000002BC 0A000008        BEQ              bu_cont
+  329 000002C0         ; Check if input was a
+  330 000002C0 E3530061        CMP              r3, #'a'
+  331 000002C4 02400001        SUBEQ            r0, r0, #1
+  332 000002C8 0A000005        BEQ              bu_cont
+  333 000002CC         ; Check if input was d
+  334 000002CC E3530064        CMP              r3, #'d'
+  335 000002D0 02800001        ADDEQ            r0, r0, #1
+  336 000002D4 0A000002        BEQ              bu_cont
+  337 000002D8         ; Reset user input
+  338 000002D8 E3A00000        MOV              r0, #0
+  339 000002DC E5860000        STR              r0, [r6]
+  340 000002E0 EA000028        B                bu_exit
+  341 000002E4         bu_cont
+  342 000002E4 E3A07000        MOV              r7, #0
+  343 000002E8 E5867000        STR              r7, [r6]
+  344 000002EC E59F7C78        LDR              r7, =player_input
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+  345 000002F0 E5873000        STR              r3, [r7]
+  346 000002F4 E1A02000        MOV              r2, r0
+  347 000002F8         ; Verify new location
+  348 000002F8 EBFFFFFE        BL               read_array
+  349 000002FC E350005A        CMP              r0, #'Z'
+  350 00000300 0A000020        BEQ              bu_exit
+  351 00000304 E3500023        CMP              r0, #'#'
+  352 00000308 0A00001E        BEQ              bu_exit
+  353 0000030C E350006F        CMP              r0, #'o'
+  354 00000310 0A00001C        BEQ              bu_exit
+  355 00000314 E3500078        CMP              r0, #'x'
+  356 00000318 0B00001C        BLEQ             DIE_BOMBERMAN
+  357 0000031C 0A000019        BEQ              bu_exit
+  358 00000320 E350002B        CMP              r0, #'+'
+  359 00000324 0B000019        BLEQ             DIE_BOMBERMAN
+  360 00000328 E350002B        CMP              r0, #'+'
+  361 0000032C 0A000015        BEQ              bu_exit
+  362 00000330         ; Location OK
+  363 00000330         ; Print new bomberman
+  364 00000330 E1A00002        MOV              r0, r2
+  365 00000334 E3A02042        MOV              r2, #'B'
+  366 00000338 EBFFFFFE        BL               draw_on_board
+  367 0000033C EBFFFFFE        BL               edit_array
+  368 00000340 E1A0A000        MOV              r10, r0
+  369 00000344 E1A0B001        MOV              r11, r1
+  370 00000348         ; Erase old bomberman
+  371 00000348 E59F4BE4        LDR              r4, =bomberman_x
+  372 0000034C E5940000        LDR              r0, [r4]
+  373 00000350 E59F5BE0        LDR              r5, =bomberman_y
+  374 00000354 E5951000        LDR              r1, [r5]
+  375 00000358         ; Check if current space is a bomb
+  376 00000358 EBFFFFFE        BL               read_array
+  377 0000035C E350006F        CMP              r0, #'o'
+  378 00000360 0A000004        BEQ              bu_str
+  379 00000364         ; Clear old bomberman
+  380 00000364 E3A02020        MOV              r2, #' '
+  381 00000368 E5940000        LDR              r0, [r4]
+  382 0000036C E5951000        LDR              r1, [r5]
+  383 00000370 EBFFFFFE        BL               draw_on_board
+  384 00000374 EBFFFFFE        BL               edit_array
+  385 00000378         bu_str
+  386 00000378         ; Store new locations
+  387 00000378 E1A0000A        MOV              r0, r10
+  388 0000037C E1A0100B        MOV              r1, r11
+  389 00000380 E5840000        STR              r0, [r4]
+  390 00000384 E5851000        STR              r1, [r5]
+  391 00000388         bu_exit
+  392 00000388 E8BD4C7F        LDMFD            sp!, {r0-r6, r10, r11, lr}
+  393 0000038C E12FFF1E        BX               lr
+  394 00000390         ; No return arguments
+  395 00000390         
+  396 00000390         
+  397 00000390         DIE_BOMBERMAN
+  398 00000390 E92D4C37        STMFD            sp!, {r0, r1, r2, r4, r5, r10, 
+r11, lr}
+  399 00000394         ; Decrement life count and displayed lives
+  400 00000394 EB0001E5        BL               LED_life
+  401 00000398         ; Check for 0 lives
+  402 00000398 E59F4B90        LDR              r4, =life_count
+
+
+
+ARM Macro Assembler    Page 9 
+
+
+  403 0000039C E5940000        LDR              r0, [r4]
+  404 000003A0 E3500000        CMP              r0, #0
+  405 000003A4 0A000017        BEQ              game_over
+  406 000003A8 0A000014        BEQ              DB_exit
+  407 000003AC         ; Respawn bomberman
+  408 000003AC         ; Print new bomberman
+  409 000003AC E3A00000        MOV              r0, #0
+  410 000003B0 E3A01000        MOV              r1, #0
+  411 000003B4 E3A02042        MOV              r2, #'B'
+  412 000003B8 EBFFFFFE        BL               draw_on_board
+  413 000003BC EBFFFFFE        BL               edit_array
+  414 000003C0 E1A0A000        MOV              r10, r0
+  415 000003C4 E1A0B001        MOV              r11, r1
+  416 000003C8         ; Erase old bomberman
+  417 000003C8 E59F4B64        LDR              r4, =bomberman_x
+  418 000003CC E5940000        LDR              r0, [r4]
+  419 000003D0 E59F5B60        LDR              r5, =bomberman_y
+  420 000003D4 E5951000        LDR              r1, [r5]
+  421 000003D8 E3A02020        MOV              r2, #' '
+  422 000003DC EBFFFFFE        BL               draw_on_board
+  423 000003E0 EBFFFFFE        BL               edit_array
+  424 000003E4 E1A0000A        MOV              r0, r10
+  425 000003E8 E1A0100B        MOV              r1, r11
+  426 000003EC E5840000        STR              r0, [r4]
+  427 000003F0 E5851000        STR              r1, [r5]
+  428 000003F4 E59F4B24        LDR              r4, =bomberman_status
+  429 000003F8 E3A00001        MOV              r0, #1
+  430 000003FC E5840000        STR              r0, [r4]
+  431 00000400         DB_exit
+  432 00000400         ; Return to caller
+  433 00000400 E8BD4C37        LDMFD            sp!, {r0, r1, r2, r4, r5, r10, 
+r11, lr}
+  434 00000404 E12FFF1E        BX               lr
+  435 00000408         
+  436 00000408         game_over
+  437 00000408 E92D4000        STMFD            sp!, {lr}
+  438 0000040C         ; handle game over stuff
+  439 0000040C EBFFFFFE        BL               clear_screen
+  440 00000410 E59F4B58        LDR              r4, =game_over_string
+  441 00000414 EBFFFFFE        BL               output_string
+  442 00000418 E59F4AFC        LDR              r4, =score
+  443 0000041C E5940000        LDR              r0, [r4]
+  444 00000420 EBFFFFFE        BL               int_to_numberString
+  445 00000424 EBFFFFFE        BL               output_string
+  446 00000428         go_loop
+  447 00000428 EAFFFFFE        B                go_loop
+  448 0000042C         ; Return to caller
+  449 0000042C E8BD4000        LDMFD            sp!, {lr}
+  450 00000430 E12FFF1E        BX               lr
+  451 00000434         
+  452 00000434         
+  453 00000434         
+  454 00000434         ; Routine that updates both slow enemies on board
+  455 00000434         ; Uses x and y coordinates in memory
+  456 00000434         ; Author: MTH
+  457 00000434         ; No inputs
+  458 00000434         slow_enemy_update
+  459 00000434 E92D4C3F        STMFD            sp!, {r0-r5, r10, r11, lr}
+  460 00000438         ; Generate random number between 1 and 4
+
+
+
+ARM Macro Assembler    Page 10 
+
+
+  461 00000438 E3A03000        MOV              r3, #0
+  462 0000043C E3A00004        MOV              r0, #4
+  463 00000440 EBFFFFFE        BL               get_rand
+  464 00000444 E2800001        ADD              r0, r0, #1
+  465 00000448         se1_check
+  466 00000448         ; Load slow_enemy_1_status to see if it is dead
+  467 00000448 E59F4AD4        LDR              r4, =slow_enemy_1_status
+  468 0000044C E5944000        LDR              r4, [r4]
+  469 00000450 E3540000        CMP              r4, #0
+  470 00000454 0A000038        BEQ              se2_check
+  471 00000458         ; Load slow_enemy_1 x and y locations
+  472 00000458         se1_loop
+  473 00000458 E59F4ADC        LDR              r4, =slow_enemy_1_x
+  474 0000045C E5942000        LDR              r2, [r4]
+  475 00000460 E59F5AD8        LDR              r5, =slow_enemy_1_y
+  476 00000464 E5951000        LDR              r1, [r5]
+  477 00000468 E3500004        CMP              r0, #4
+  478 0000046C C3A00001        MOVGT            r0, #1
+  479 00000470         ; 1 = up
+  480 00000470 E3500001        CMP              r0, #1
+  481 00000474 02411001        SUBEQ            r1, r1, #1
+  482 00000478 0A000009        BEQ              se1_cont
+  483 0000047C         ; 2 = right
+  484 0000047C E3500002        CMP              r0, #2
+  485 00000480 02822001        ADDEQ            r2, r2, #1
+  486 00000484 0A000006        BEQ              se1_cont
+  487 00000488         ; 3 = down
+  488 00000488 E3500003        CMP              r0, #3
+  489 0000048C 02811001        ADDEQ            r1, r1, #1
+  490 00000490 0A000003        BEQ              se1_cont
+  491 00000494         ; 4 = left
+  492 00000494 E3500004        CMP              r0, #4
+  493 00000498 02422001        SUBEQ            r2, r2, #1
+  494 0000049C 0A000000        BEQ              se1_cont
+  495 000004A0 EAFFFFEC        B                se1_loop
+  496 000004A4         se1_cont
+  497 000004A4         ; Check location
+  498 000004A4 E1A06000        MOV              r6, r0
+  499 000004A8 E1A00002        MOV              r0, r2
+  500 000004AC EBFFFFFE        BL               read_array
+  501 000004B0 E350005A        CMP              r0, #'Z'
+  502 000004B4 0A000006        BEQ              se1_retry
+  503 000004B8 E3500023        CMP              r0, #'#'
+  504 000004BC 0A000004        BEQ              se1_retry
+  505 000004C0 E350006F        CMP              r0, #'o'
+  506 000004C4 0A000002        BEQ              se1_retry
+  507 000004C8 E3500042        CMP              r0, #'B'
+  508 000004CC 0BFFFFAF        BLEQ             DIE_BOMBERMAN
+  509 000004D0 EA000005        B                se1_location_works
+  510 000004D4         se1_retry
+  511 000004D4         ; Increment random number if previous number was not val
+                       id
+  512 000004D4 E1A00006        MOV              r0, r6
+  513 000004D8 E2800001        ADD              r0, r0, #1
+  514 000004DC E2833001        ADD              r3, r3, #1
+  515 000004E0 E3530004        CMP              r3, #4
+  516 000004E4 AA000014        BGE              se2_check
+  517 000004E8 EAFFFFDA        B                se1_loop
+  518 000004EC         se1_location_works
+
+
+
+ARM Macro Assembler    Page 11 
+
+
+  519 000004EC         ; Print new slow enemy
+  520 000004EC E1A00002        MOV              r0, r2
+  521 000004F0 E3A02078        MOV              r2, #'x'
+  522 000004F4 EBFFFFFE        BL               draw_on_board
+  523 000004F8 EBFFFFFE        BL               edit_array
+  524 000004FC E1A0A000        MOV              r10, r0
+  525 00000500 E1A0B001        MOV              r11, r1
+  526 00000504         ; Load old location to clear old enemy
+  527 00000504 E59F4A30        LDR              r4, =slow_enemy_1_x
+  528 00000508 E5940000        LDR              r0, [r4]
+  529 0000050C E59F5A2C        LDR              r5, =slow_enemy_1_y
+  530 00000510 E5951000        LDR              r1, [r5]
+  531 00000514 E3A02020        MOV              r2, #' '
+  532 00000518 EBFFFFFE        BL               draw_on_board
+  533 0000051C EBFFFFFE        BL               edit_array
+  534 00000520         ; Store new locations
+  535 00000520 E1A0000A        MOV              r0, r10
+  536 00000524 E1A0100B        MOV              r1, r11
+  537 00000528 E5840000        STR              r0, [r4]
+  538 0000052C E5851000        STR              r1, [r5]
+  539 00000530         ; Get a new random number
+  540 00000530 E3A00004        MOV              r0, #4
+  541 00000534 EBFFFFFE        BL               get_rand
+  542 00000538 E2800001        ADD              r0, r0, #1
+  543 0000053C         
+  544 0000053C         se2_check
+  545 0000053C         ; Check to see if slow enemy 2 is dead
+  546 0000053C E3A03000        MOV              r3, #0
+  547 00000540 E59F49E0        LDR              r4, =slow_enemy_2_status
+  548 00000544 E5944000        LDR              r4, [r4]
+  549 00000548 E3540000        CMP              r4, #0
+  550 0000054C 0A000035        BEQ              se_exit
+  551 00000550         se2_loop
+  552 00000550         ; Load current x and y locations
+  553 00000550 E59F49EC        LDR              r4, =slow_enemy_2_x
+  554 00000554 E5942000        LDR              r2, [r4]
+  555 00000558 E59F59E8        LDR              r5, =slow_enemy_2_y
+  556 0000055C E5951000        LDR              r1, [r5]
+  557 00000560 E3500004        CMP              r0, #4
+  558 00000564 C3A00001        MOVGT            r0, #1
+  559 00000568         ; 1 = up
+  560 00000568 E3500001        CMP              r0, #1
+  561 0000056C 02411001        SUBEQ            r1, r1, #1
+  562 00000570 0A000009        BEQ              se2_cont
+  563 00000574         ; 2 = down
+  564 00000574 E3500002        CMP              r0, #2
+  565 00000578 02811001        ADDEQ            r1, r1, #1
+  566 0000057C 0A000006        BEQ              se2_cont
+  567 00000580         ; 3 = right
+  568 00000580 E3500003        CMP              r0, #3
+  569 00000584 02822001        ADDEQ            r2, r2, #1
+  570 00000588 0A000003        BEQ              se2_cont
+  571 0000058C         ; 4 = left
+  572 0000058C E3500004        CMP              r0, #4
+  573 00000590 02422001        SUBEQ            r2, r2, #1
+  574 00000594 0A000000        BEQ              se2_cont
+  575 00000598 EAFFFFEC        B                se2_loop
+  576 0000059C         se2_cont
+  577 0000059C         ; Check location
+
+
+
+ARM Macro Assembler    Page 12 
+
+
+  578 0000059C E1A06000        MOV              r6, r0
+  579 000005A0 E1A00002        MOV              r0, r2
+  580 000005A4 EBFFFFFE        BL               read_array
+  581 000005A8 E350005A        CMP              r0, #'Z'
+  582 000005AC 0A000006        BEQ              se2_retry
+  583 000005B0 E3500023        CMP              r0, #'#'
+  584 000005B4 0A000004        BEQ              se2_retry
+  585 000005B8 E350006F        CMP              r0, #'o'
+  586 000005BC 0A000002        BEQ              se2_retry
+  587 000005C0 E3500042        CMP              r0, #'B'
+  588 000005C4 0BFFFF71        BLEQ             DIE_BOMBERMAN
+  589 000005C8 EA000005        B                se2_location_works
+  590 000005CC         se2_retry
+  591 000005CC         ; Increment random number if previous number was not val
+                       id
+  592 000005CC E1A00006        MOV              r0, r6
+  593 000005D0 E2800001        ADD              r0, r0, #1
+  594 000005D4 E2833001        ADD              r3, r3, #1
+  595 000005D8 E3530004        CMP              r3, #4
+  596 000005DC AA000011        BGE              se_exit
+  597 000005E0 EAFFFFDA        B                se2_loop
+  598 000005E4         se2_location_works
+  599 000005E4         ; Print new enemy
+  600 000005E4 E1A00002        MOV              r0, r2
+  601 000005E8 E3A02078        MOV              r2, #'x'
+  602 000005EC EBFFFFFE        BL               draw_on_board
+  603 000005F0 EBFFFFFE        BL               edit_array
+  604 000005F4 E1A0A000        MOV              r10, r0
+  605 000005F8 E1A0B001        MOV              r11, r1
+  606 000005FC         ; Load old location to clear old enemy
+  607 000005FC E59F4940        LDR              r4, =slow_enemy_2_x
+  608 00000600 E5940000        LDR              r0, [r4]
+  609 00000604 E59F593C        LDR              r5, =slow_enemy_2_y
+  610 00000608 E5951000        LDR              r1, [r5]
+  611 0000060C E3A02020        MOV              r2, #' '
+  612 00000610 EBFFFFFE        BL               draw_on_board
+  613 00000614 EBFFFFFE        BL               edit_array
+  614 00000618         ; Store new locations
+  615 00000618 E1A0000A        MOV              r0, r10
+  616 0000061C E1A0100B        MOV              r1, r11
+  617 00000620 E5840000        STR              r0, [r4]
+  618 00000624 E5851000        STR              r1, [r5]
+  619 00000628         se_exit
+  620 00000628 E8BD4C3F        LDMFD            sp!, {r0-r5, r10, r11, lr}
+  621 0000062C E12FFF1E        BX               lr
+  622 00000630         ; No return arguments
+  623 00000630         
+  624 00000630         
+  625 00000630         
+  626 00000630         
+  627 00000630         
+  628 00000630         ; Routine that updates the fast enemy on board
+  629 00000630         ; Uses x and y locations in memeory
+  630 00000630         ; Author: MTH
+  631 00000630         ; No inputs
+  632 00000630         fast_enemy_update
+  633 00000630 E92D4C3F        STMFD            sp!, {r0-r5, r10, r11, lr}
+  634 00000634 E3A00004        MOV              r0, #4
+  635 00000638 EBFFFFFE        BL               get_rand
+
+
+
+ARM Macro Assembler    Page 13 
+
+
+  636 0000063C E2800001        ADD              r0, r0, #1
+  637 00000640         fe1_loop
+  638 00000640 E59F4904        LDR              r4, =fast_enemy_x
+  639 00000644 E5942000        LDR              r2, [r4]
+  640 00000648 E59F5900        LDR              r5, =fast_enemy_y
+  641 0000064C E5951000        LDR              r1, [r5]
+  642 00000650 E3500004        CMP              r0, #4
+  643 00000654 C3A00001        MOVGT            r0, #1
+  644 00000658         ; 1 = left
+  645 00000658 E3500001        CMP              r0, #1
+  646 0000065C 02422001        SUBEQ            r2, r2, #1
+  647 00000660 0A000009        BEQ              fe1_cont
+  648 00000664         ; 2 = right
+  649 00000664 E3500002        CMP              r0, #2
+  650 00000668 02822001        ADDEQ            r2, r2, #1
+  651 0000066C 0A000006        BEQ              fe1_cont
+  652 00000670         ; 3 = down
+  653 00000670 E3500003        CMP              r0, #3
+  654 00000674 02811001        ADDEQ            r1, r1, #1
+  655 00000678 0A000003        BEQ              fe1_cont
+  656 0000067C         ; 4 = up
+  657 0000067C E3500004        CMP              r0, #4
+  658 00000680 02411001        SUBEQ            r1, r1, #1
+  659 00000684 0A000000        BEQ              fe1_cont
+  660 00000688 EAFFFFEC        B                fe1_loop
+  661 0000068C         fe1_cont
+  662 0000068C         ; Check location
+  663 0000068C E1A06000        MOV              r6, r0
+  664 00000690 E1A00002        MOV              r0, r2
+  665 00000694 EBFFFFFE        BL               read_array
+  666 00000698 E350005A        CMP              r0, #'Z'
+  667 0000069C 0A000006        BEQ              fe1_retry
+  668 000006A0 E3500023        CMP              r0, #'#'
+  669 000006A4 0A000004        BEQ              fe1_retry
+  670 000006A8 E350006F        CMP              r0, #'o'
+  671 000006AC 0A000002        BEQ              fe1_retry
+  672 000006B0 E3500042        CMP              r0, #'B'
+  673 000006B4 0BFFFF35        BLEQ             DIE_BOMBERMAN
+  674 000006B8 EA000002        B                fe1_location_works
+  675 000006BC         fe1_retry
+  676 000006BC         ; Increment random number if previous number was not val
+                       id
+  677 000006BC E1A00006        MOV              r0, r6
+  678 000006C0 E2800001        ADD              r0, r0, #1
+  679 000006C4 EAFFFFDD        B                fe1_loop
+  680 000006C8         fe1_location_works
+  681 000006C8 E1A00002        MOV              r0, r2
+  682 000006CC E3A0202B        MOV              r2, #'+'
+  683 000006D0 EBFFFFFE        BL               draw_on_board
+  684 000006D4 EBFFFFFE        BL               edit_array
+  685 000006D8 E1A0A000        MOV              r10, r0
+  686 000006DC E1A0B001        MOV              r11, r1
+  687 000006E0 E59F4864        LDR              r4, =fast_enemy_x
+  688 000006E4 E5940000        LDR              r0, [r4]
+  689 000006E8 E59F5860        LDR              r5, =fast_enemy_y
+  690 000006EC E5951000        LDR              r1, [r5]
+  691 000006F0 E3A02020        MOV              r2, #' '
+  692 000006F4 EBFFFFFE        BL               draw_on_board
+  693 000006F8 EBFFFFFE        BL               edit_array
+
+
+
+ARM Macro Assembler    Page 14 
+
+
+  694 000006FC E1A0000A        MOV              r0, r10
+  695 00000700 E1A0100B        MOV              r1, r11
+  696 00000704 E5840000        STR              r0, [r4]
+  697 00000708 E5851000        STR              r1, [r5]
+  698 0000070C E8BD4C3F        LDMFD            sp!, {r0-r5, r10, r11, lr}
+  699 00000710 E12FFF1E        BX               lr
+  700 00000714         ; No return arguments
+  701 00000714         
+  702 00000714         
+  703 00000714         
+  704 00000714         
+  705 00000714         ; get_rand returns a random number between 0 and one min
+                       us the input value
+  706 00000714         ; Author: MTH
+  707 00000714         ; arg0: upper limit of random number
+  708 00000714         get_rand
+  709 00000714 E92D443E        STMFD            sp!, {r1-r5, r10, lr}
+  710 00000718         ; move input to r1 so it is divisor for division
+  711 00000718 E1A0A000        MOV              r10, r0
+  712 0000071C         ; Load user input from welcome screen
+  713 0000071C E59F5840        LDR              r5, =rand_character
+  714 00000720 E5952000        LDR              r2, [r5]
+  715 00000724         ; Load Time Count register value
+  716 00000724 E59F4848        LDR              r4, =0xE0004008
+  717 00000728 E5940000        LDR              r0, [r4]
+  718 0000072C E0030092        MUL              r3, r2, r0
+  719 00000730         ; Load time variable in memory
+  720 00000730 E59F47DC        LDR              r4, =time
+  721 00000734 E5941000        LDR              r1, [r4]
+  722 00000738 E0830001        ADD              r0, r3, r1
+  723 0000073C         ; Load latest player input from UART
+  724 0000073C E59F4828        LDR              r4, =player_input
+  725 00000740 E5942000        LDR              r2, [r4]
+  726 00000744         ; Mask out upper 6 bytes
+  727 00000744 E20000FF        AND              r0, r0, #0x000000FF
+  728 00000748 E0800002        ADD              r0, r0, r2
+  729 0000074C E1A0100A        MOV              r1, r10
+  730 00000750         ; Take mod
+  731 00000750 EBFFFFFE        BL               div_and_mod
+  732 00000754         ; Move remainder to r0 so it is the return value
+  733 00000754 E1A00001        MOV              r0, r1
+  734 00000758 E8BD443E        LDMFD            sp!, {r1-r5, r10, lr}
+  735 0000075C E12FFF1E        BX               lr
+  736 00000760         ; ret0: random number between 0 and one minus input
+  737 00000760         
+  738 00000760         
+  739 00000760         
+  740 00000760         
+  741 00000760         ; Routine draws a bomb on screen
+  742 00000760         ; Author: MTH
+  743 00000760         ; No inputs
+  744 00000760         drop_bomb
+  745 00000760 E92D4033        STMFD            sp!, {r0, r1, r4, r5, lr}
+  746 00000764         ; Start bomb status counter at 8
+  747 00000764 E59F47E8        LDR              r4, =bomb_status
+  748 00000768 E5940000        LDR              r0, [r4]
+  749 0000076C E3500000        CMP              r0, #0
+  750 00000770 CA000012        BGT              bd_exit
+  751 00000774 E3A00008        MOV              r0, #8
+
+
+
+ARM Macro Assembler    Page 15 
+
+
+  752 00000778 E5840000        STR              r0, [r4]
+  753 0000077C         ; Change game status to 2
+  754 0000077C E59F478C        LDR              r4, =game_status
+  755 00000780 E3A00002        MOV              r0, #2
+  756 00000784 E5840000        STR              r0, [r4]
+  757 00000788         ; Update rgb status and change rgb color
+  758 00000788 E59F47E8        LDR              r4, =rgb_status
+  759 0000078C E5840000        STR              r0, [r4]
+  760 00000790 EB0000FA        BL               RGB_update
+  761 00000794         ; Use current bomberman coordinates to draw bomb
+  762 00000794 E59F4798        LDR              r4, =bomberman_x
+  763 00000798 E5940000        LDR              r0, [r4]
+  764 0000079C E59F5794        LDR              r5, =bomberman_y
+  765 000007A0 E5951000        LDR              r1, [r5]
+  766 000007A4 E3A0206F        MOV              r2, #'o'
+  767 000007A8 EBFFFFFE        BL               draw_on_board
+  768 000007AC EBFFFFFE        BL               edit_array
+  769 000007B0         ; Store coordinates as bomb location
+  770 000007B0 E59F47C4        LDR              r4, =bomb_x
+  771 000007B4 E59F57C4        LDR              r5, =bomb_y
+  772 000007B8 E5840000        STR              r0, [r4]
+  773 000007BC E5851000        STR              r1, [r5]
+  774 000007C0         bd_exit
+  775 000007C0 E8BD4033        LDMFD            sp!, {r0, r1, r4, r5, lr}
+  776 000007C4 E12FFF1E        BX               lr
+  777 000007C8         ; No outputs   
+  778 000007C8         
+  779 000007C8         
+  780 000007C8         
+  781 000007C8         
+  782 000007C8         ; Prints bomb explosion and checks what got destroyed
+  783 000007C8         ; Author: MTH
+  784 000007C8         ; No inputs
+  785 000007C8         print_explosion
+  786 000007C8 E92D40FF        STMFD            sp!, {r0-r7, lr}
+  787 000007CC         ; Load bomb location
+  788 000007CC E59F47A8        LDR              r4, =bomb_x
+  789 000007D0 E5946000        LDR              r6, [r4]
+  790 000007D4 E59F57A4        LDR              r5, =bomb_y
+  791 000007D8 E5957000        LDR              r7, [r5]
+  792 000007DC E1A00006        MOV              r0, r6
+  793 000007E0 E1A01007        MOV              r1, r7
+  794 000007E4         ; Check if anything got destroyed
+  795 000007E4 EB000041        BL               explosion_check
+  796 000007E8 E3A01002        MOV              r1, #2
+  797 000007EC         ; Sheck mod of x coordinate
+  798 000007EC E1A00006        MOV              r0, r6
+  799 000007F0 EBFFFFFE        BL               div_and_mod
+  800 000007F4 E3510001        CMP              r1, #1
+  801 000007F8         ; If an odd row, branch to check_y
+  802 000007F8 0A000012        BEQ              check_y
+  803 000007FC E1A01007        MOV              r1, r7
+  804 00000800 E1A00006        MOV              r0, r6
+  805 00000804 E3A0207C        MOV              r2, #'|'
+  806 00000808         ; Print vertical explosion bars and check their location
+                       s
+  807 00000808 E2411002        SUB              r1, r1, #2
+  808 0000080C E3510000        CMP              r1, #0
+  809 00000810 ABFFFFFE        BLGE             draw_on_board
+
+
+
+ARM Macro Assembler    Page 16 
+
+
+  810 00000814 AB000035        BLGE             explosion_check
+  811 00000818 E2811001        ADD              r1, r1, #1
+  812 0000081C E3510000        CMP              r1, #0
+  813 00000820 ABFFFFFE        BLGE             draw_on_board
+  814 00000824 AB000031        BLGE             explosion_check
+  815 00000828 E2811003        ADD              r1, r1, #3
+  816 0000082C E351000A        CMP              r1, #10
+  817 00000830 DBFFFFFE        BLLE             draw_on_board
+  818 00000834 DB00002D        BLLE             explosion_check
+  819 00000838 E2411001        SUB              r1, r1, #1
+  820 0000083C E351000A        CMP              r1, #10
+  821 00000840 DBFFFFFE        BLLE             draw_on_board
+  822 00000844 DB000029        BLLE             explosion_check
+  823 00000848         
+  824 00000848         
+  825 00000848         check_y                              ; check mod of y co
+                                                            ordinate
+  826 00000848 E1A00007        MOV              r0, r7
+  827 0000084C E3A01002        MOV              r1, #2
+  828 00000850 EBFFFFFE        BL               div_and_mod
+  829 00000854 E3510001        CMP              r1, #1
+  830 00000858 0A000022        BEQ              pe_exit
+  831 0000085C E1A01007        MOV              r1, r7
+  832 00000860 E1A00006        MOV              r0, r6
+  833 00000864 E3A0202D        MOV              r2, #'-'
+  834 00000868         ; Print horizontal explosion bars and check their locati
+                       ons
+  835 00000868 E2400004        SUB              r0, r0, #4
+  836 0000086C E3500000        CMP              r0, #0
+  837 00000870 ABFFFFFE        BLGE             draw_on_board
+  838 00000874 AB00001D        BLGE             explosion_check
+  839 00000878 E2800001        ADD              r0, r0, #1
+  840 0000087C E3500000        CMP              r0, #0
+  841 00000880 ABFFFFFE        BLGE             draw_on_board
+  842 00000884 AB000019        BLGE             explosion_check
+  843 00000888 E2800001        ADD              r0, r0, #1
+  844 0000088C E3500000        CMP              r0, #0
+  845 00000890 ABFFFFFE        BLGE             draw_on_board
+  846 00000894 AB000015        BLGE             explosion_check
+  847 00000898 E2800001        ADD              r0, r0, #1
+  848 0000089C E3500000        CMP              r0, #0
+  849 000008A0 ABFFFFFE        BLGE             draw_on_board
+  850 000008A4 AB000011        BLGE             explosion_check
+  851 000008A8         
+  852 000008A8 E2800005        ADD              r0, r0, #5
+  853 000008AC E3500016        CMP              r0, #22
+  854 000008B0 DBFFFFFE        BLLE             draw_on_board
+  855 000008B4 AB00000D        BLGE             explosion_check
+  856 000008B8 E2400001        SUB              r0, r0, #1
+  857 000008BC E3500016        CMP              r0, #22
+  858 000008C0 DBFFFFFE        BLLE             draw_on_board
+  859 000008C4 AB000009        BLGE             explosion_check
+  860 000008C8 E2400001        SUB              r0, r0, #1
+  861 000008CC E3500016        CMP              r0, #22
+  862 000008D0 DBFFFFFE        BLLE             draw_on_board
+  863 000008D4 AB000005        BLGE             explosion_check
+  864 000008D8 E2400001        SUB              r0, r0, #1
+  865 000008DC E3500016        CMP              r0, #22
+  866 000008E0 DBFFFFFE        BLLE             draw_on_board
+
+
+
+ARM Macro Assembler    Page 17 
+
+
+  867 000008E4 AB000001        BLGE             explosion_check
+  868 000008E8         pe_exit
+  869 000008E8 E8BD40FF        LDMFD            sp!, {r0-r7, lr}
+  870 000008EC E12FFF1E        BX               lr
+  871 000008F0         ; No outputs
+  872 000008F0         
+  873 000008F0         
+  874 000008F0         explosion_check
+  875 000008F0 E92D47FF        STMFD            sp!, {r0-r10, lr}
+  876 000008F4 E1A05000        MOV              r5, r0
+  877 000008F8 E1A06001        MOV              r6, r1
+  878 000008FC E59F7618        LDR              r7, =score
+  879 00000900 E5978000        LDR              r8, [r7]
+  880 00000904 E59F960C        LDR              r9, =level
+  881 00000908 E5999000        LDR              r9, [r9]
+  882 0000090C E3A0300A        MOV              r3, #10
+  883 00000910 E00A0399        MUL              r10, r9, r3
+  884 00000914 EBFFFFFE        BL               read_array
+  885 00000918 E350005A        CMP              r0, #'Z'
+  886 0000091C 0A00003D        BEQ              ec_exit
+  887 00000920         ; check if fast enemy
+  888 00000920 E59F4604        LDR              r4, =fast_enemy_status
+  889 00000924 E350002B        CMP              r0, #'+'
+  890 00000928 03A00000        MOVEQ            r0, #0
+  891 0000092C 05840000        STREQ            r0, [r4]
+  892 00000930 0088800A        ADDEQ            r8, r8, r10
+  893 00000934 05878000        STREQ            r8, [r7]
+  894 00000938 0A000032        BEQ              ec_edit
+  895 0000093C         ; check if brick
+  896 0000093C E3500023        CMP              r0, #'#'
+  897 00000940 00888009        ADDEQ            r8, r8, r9
+  898 00000944 05878000        STREQ            r8, [r7]
+  899 00000948 0A00002E        BEQ              ec_edit
+  900 0000094C         ; check if bomberman
+  901 0000094C E3500042        CMP              r0, #'B'
+  902 00000950 059F45C8        LDREQ            r4, =bomberman_status
+  903 00000954 03A00000        MOVEQ            r0, #0
+  904 00000958 05840000        STREQ            r0, [r4]
+  905 0000095C 0A00002D        BEQ              ec_exit
+  906 00000960 E59F45CC        LDR              r4, =bomberman_x
+  907 00000964 E5944000        LDR              r4, [r4]
+  908 00000968 E1540005        CMP              r4, r5
+  909 0000096C 1A000006        BNE              ec_cont
+  910 00000970 E59F45C0        LDR              r4, =bomberman_y
+  911 00000974 E5944000        LDR              r4, [r4]
+  912 00000978 E1540006        CMP              r4, r6
+  913 0000097C 059F459C        LDREQ            r4, =bomberman_status
+  914 00000980 03A00000        MOVEQ            r0, #0
+  915 00000984 05840000        STREQ            r0, [r4]
+  916 00000988 0A000022        BEQ              ec_exit
+  917 0000098C         ec_cont
+  918 0000098C E3500020        CMP              r0, #' '
+  919 00000990 0A00001C        BEQ              ec_edit
+  920 00000994         ; check if slow enemy
+  921 00000994 E59F45A0        LDR              r4, =slow_enemy_1_x
+  922 00000998 E3500078        CMP              r0, #'x'
+  923 0000099C 1A000019        BNE              ec_edit
+  924 000009A0 E5944000        LDR              r4, [r4]
+  925 000009A4 E1540005        CMP              r4, r5
+
+
+
+ARM Macro Assembler    Page 18 
+
+
+  926 000009A8 1A000008        BNE              check_2
+  927 000009AC E59F458C        LDR              r4, =slow_enemy_1_y
+  928 000009B0 E5944000        LDR              r4, [r4]
+  929 000009B4 E1540006        CMP              r4, r6
+  930 000009B8 059F4564        LDREQ            r4, =slow_enemy_1_status
+  931 000009BC 03A00000        MOVEQ            r0, #0
+  932 000009C0 05840000        STREQ            r0, [r4]
+  933 000009C4 0088800A        ADDEQ            r8, r8, r10
+  934 000009C8 05878000        STREQ            r8, [r7]
+  935 000009CC 0A00000D        BEQ              ec_edit
+  936 000009D0         check_2
+  937 000009D0 E59F456C        LDR              r4, =slow_enemy_2_x
+  938 000009D4 E5944000        LDR              r4, [r4]
+  939 000009D8 E1540005        CMP              r4, r5
+  940 000009DC 1A000009        BNE              ec_edit
+  941 000009E0 E59F4560        LDR              r4, =slow_enemy_2_y
+  942 000009E4 E5944000        LDR              r4, [r4]
+  943 000009E8 E1540006        CMP              r4, r6
+  944 000009EC 059F4534        LDREQ            r4, =slow_enemy_2_status
+  945 000009F0 03A00000        MOVEQ            r0, #0
+  946 000009F4 05840000        STREQ            r0, [r4]
+  947 000009F8 0088800A        ADDEQ            r8, r8, r10
+  948 000009FC 05878000        STREQ            r8, [r7]
+  949 00000A00 0A000000        BEQ              ec_edit
+  950 00000A04 EA000003        B                ec_exit
+  951 00000A08         
+  952 00000A08         ec_edit
+  953 00000A08 E1A00005        MOV              r0, r5
+  954 00000A0C E1A01006        MOV              r1, r6
+  955 00000A10 E3A02020        MOV              r2, #' '
+  956 00000A14 EBFFFFFE        BL               edit_array
+  957 00000A18         ec_exit
+  958 00000A18 E1A00008        MOV              r0, r8
+  959 00000A1C EBFFFFFE        BL               change_score_value
+  960 00000A20 E8BD47FF        LDMFD            sp!, {r0-r10, lr}
+  961 00000A24 E12FFF1E        BX               lr
+  962 00000A28         
+  963 00000A28         
+  964 00000A28         clear_explosion
+  965 00000A28 E92D40FF        STMFD            sp!, {r0-r7, lr}
+  966 00000A2C E59F4548        LDR              r4, =bomb_x
+  967 00000A30 E5946000        LDR              r6, [r4]
+  968 00000A34 E59F5544        LDR              r5, =bomb_y
+  969 00000A38 E5957000        LDR              r7, [r5]
+  970 00000A3C E1A00006        MOV              r0, r6
+  971 00000A40 E1A01007        MOV              r1, r7
+  972 00000A44 E3A02020        MOV              r2, #' '
+  973 00000A48 EBFFFFFE        BL               draw_on_board
+  974 00000A4C E3A01002        MOV              r1, #2
+  975 00000A50         ; check mod of x coordinate
+  976 00000A50 E1A00006        MOV              r0, r6
+  977 00000A54 EBFFFFFE        BL               div_and_mod
+  978 00000A58 E3510001        CMP              r1, #1
+  979 00000A5C 0A00000E        BEQ              chck_y
+  980 00000A60 E1A01007        MOV              r1, r7
+  981 00000A64 E1A00006        MOV              r0, r6
+  982 00000A68 E3A02020        MOV              r2, #' '
+  983 00000A6C E2411002        SUB              r1, r1, #2
+  984 00000A70 E3510000        CMP              r1, #0
+
+
+
+ARM Macro Assembler    Page 19 
+
+
+  985 00000A74 ABFFFFFE        BLGE             draw_on_board
+  986 00000A78 E2811001        ADD              r1, r1, #1
+  987 00000A7C E3510000        CMP              r1, #0
+  988 00000A80 ABFFFFFE        BLGE             draw_on_board
+  989 00000A84 E2811003        ADD              r1, r1, #3
+  990 00000A88 E351000A        CMP              r1, #10
+  991 00000A8C DBFFFFFE        BLLE             draw_on_board
+  992 00000A90 E2411001        SUB              r1, r1, #1
+  993 00000A94 E351000A        CMP              r1, #10
+  994 00000A98 DBFFFFFE        BLLE             draw_on_board
+  995 00000A9C         
+  996 00000A9C         
+  997 00000A9C         chck_y                               ; check mod of y co
+                                                            ordinate
+  998 00000A9C E1A00007        MOV              r0, r7
+  999 00000AA0 E3A01002        MOV              r1, #2
+ 1000 00000AA4 EBFFFFFE        BL               div_and_mod
+ 1001 00000AA8 E3510001        CMP              r1, #1
+ 1002 00000AAC 0A00001A        BEQ              ce_exit
+ 1003 00000AB0 E1A01007        MOV              r1, r7
+ 1004 00000AB4 E1A00006        MOV              r0, r6
+ 1005 00000AB8 E3A02020        MOV              r2, #' '
+ 1006 00000ABC E2400004        SUB              r0, r0, #4
+ 1007 00000AC0 E3500000        CMP              r0, #0
+ 1008 00000AC4 ABFFFFFE        BLGE             draw_on_board
+ 1009 00000AC8 E2800001        ADD              r0, r0, #1
+ 1010 00000ACC E3500000        CMP              r0, #0
+ 1011 00000AD0 ABFFFFFE        BLGE             draw_on_board
+ 1012 00000AD4 E2800001        ADD              r0, r0, #1
+ 1013 00000AD8 E3500000        CMP              r0, #0
+ 1014 00000ADC ABFFFFFE        BLGE             draw_on_board
+ 1015 00000AE0 E2800001        ADD              r0, r0, #1
+ 1016 00000AE4 E3500000        CMP              r0, #0
+ 1017 00000AE8 ABFFFFFE        BLGE             draw_on_board
+ 1018 00000AEC         
+ 1019 00000AEC E2800005        ADD              r0, r0, #5
+ 1020 00000AF0 E3500016        CMP              r0, #22
+ 1021 00000AF4 DBFFFFFE        BLLE             draw_on_board
+ 1022 00000AF8 E2400001        SUB              r0, r0, #1
+ 1023 00000AFC E3500016        CMP              r0, #22
+ 1024 00000B00 DBFFFFFE        BLLE             draw_on_board
+ 1025 00000B04 E2400001        SUB              r0, r0, #1
+ 1026 00000B08 E3500016        CMP              r0, #22
+ 1027 00000B0C DBFFFFFE        BLLE             draw_on_board
+ 1028 00000B10 E2400001        SUB              r0, r0, #1
+ 1029 00000B14 E3500016        CMP              r0, #22
+ 1030 00000B18 DBFFFFFE        BLLE             draw_on_board
+ 1031 00000B1C         
+ 1032 00000B1C         
+ 1033 00000B1C         ce_exit
+ 1034 00000B1C E59F43EC        LDR              r4, =game_status
+ 1035 00000B20 E3A00001        MOV              r0, #1
+ 1036 00000B24 E5840000        STR              r0, [r4]
+ 1037 00000B28 E8BD40FF        LDMFD            sp!, {r0-r7, lr}
+ 1038 00000B2C E12FFF1E        BX               lr
+ 1039 00000B30         
+ 1040 00000B30         ; Main LED handler that decrements LED representation of
+                        lives
+ 1041 00000B30         ; Author: MTH
+
+
+
+ARM Macro Assembler    Page 20 
+
+
+ 1042 00000B30         ; No input arguments
+ 1043 00000B30         LED_life
+ 1044 00000B30 E92D4011        STMFD            sp!, {r0, r4, lr}
+ 1045 00000B34         ; Load number of lives
+ 1046 00000B34 E59F43F4        LDR              r4, =life_count
+ 1047 00000B38 E5940000        LDR              r0, [r4]
+ 1048 00000B3C         ; Check for 4 lives; if 4, reduce to 3
+ 1049 00000B3C E350000F        CMP              r0, #15
+ 1050 00000B40 03A00007        MOVEQ            r0, #7
+ 1051 00000B44 0A000009        BEQ              ll_end
+ 1052 00000B48         ; Check for 3 lives; if 3, reduce to 2
+ 1053 00000B48 E3500007        CMP              r0, #7
+ 1054 00000B4C 03A00003        MOVEQ            r0, #3
+ 1055 00000B50 0A000006        BEQ              ll_end
+ 1056 00000B54         ; Check for 2 lives; if 2, reduce to 1
+ 1057 00000B54 E3500003        CMP              r0, #3
+ 1058 00000B58 03A00001        MOVEQ            r0, #1
+ 1059 00000B5C 0A000003        BEQ              ll_end
+ 1060 00000B60         ; Check for 1 lives; if 1, reduce to 0 and branch to gam
+                       e over
+ 1061 00000B60 E3500001        CMP              r0, #1
+ 1062 00000B64 03A00000        MOVEQ            r0, #0
+ 1063 00000B68 05840000        STREQ            r0, [r4]
+ 1064 00000B6C 0BFFFFFE        BLEQ             LEDs
+ 1065 00000B70         ;BEQ  GAMEOVER
+ 1066 00000B70         ll_end
+ 1067 00000B70         ; Store lives back to memory and display value
+ 1068 00000B70 E5840000        STR              r0, [r4]
+ 1069 00000B74 EBFFFFFE        BL               LEDs
+ 1070 00000B78 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+ 1071 00000B7C E12FFF1E        BX               lr
+ 1072 00000B80         ; No output
+ 1073 00000B80         
+ 1074 00000B80         
+ 1075 00000B80         
+ 1076 00000B80         
+ 1077 00000B80         
+ 1078 00000B80         ; RGB updater that changes the rgb color when game statu
+                       s changes
+ 1079 00000B80         ; Before game(0):  White
+ 1080 00000B80         ; During game(1):  Green
+ 1081 00000B80         ; Bomb Explosion(2): Red Blinking
+ 1082 00000B80         ; Pause(3):    Blue
+ 1083 00000B80         ; Game Over(4):   Purple
+ 1084 00000B80         ; Author: MTH
+ 1085 00000B80         ; No input arguments
+ 1086 00000B80         RGB_update
+ 1087 00000B80 E92D4011        STMFD            sp!, {r0, r4, lr}
+ 1088 00000B84         ; Load game_status
+ 1089 00000B84 E59F4384        LDR              r4, =game_status
+ 1090 00000B88 E5940000        LDR              r0, [r4]
+ 1091 00000B8C E3500000        CMP              r0, #0      ; Compare to 0 (Bef
+                                                            ore game)
+ 1092 00000B90         ; If game_status = 0, make rgb white
+ 1093 00000B90 0A00000B        BEQ              ru_change
+ 1094 00000B94         ; If game_status = 1, make rgb green
+ 1095 00000B94 E3500001        CMP              r0, #1
+ 1096 00000B98 03A00003        MOVEQ            r0, #3
+ 1097 00000B9C 0A000008        BEQ              ru_change
+
+
+
+ARM Macro Assembler    Page 21 
+
+
+ 1098 00000BA0         ; If game_status = 2, make rgb red and branch to rgb_tog
+                       gle
+ 1099 00000BA0 E3500002        CMP              r0, #2
+ 1100 00000BA4 03A00006        MOVEQ            r0, #6
+ 1101 00000BA8 0A000005        BEQ              ru_change
+ 1102 00000BAC         ; If game_status = 3, make rgb blue
+ 1103 00000BAC E3500003        CMP              r0, #3
+ 1104 00000BB0 03A00005        MOVEQ            r0, #5
+ 1105 00000BB4 0A000002        BEQ              ru_change
+ 1106 00000BB8         ; If game_status = 4, make rgb purple
+ 1107 00000BB8 E3500004        CMP              r0, #4
+ 1108 00000BBC 0A000000        BEQ              ru_change
+ 1109 00000BC0 EA000000        B                ru_end
+ 1110 00000BC4         ru_change
+ 1111 00000BC4 EBFFFFFE        BL               rgb_set
+ 1112 00000BC8         ru_end
+ 1113 00000BC8 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+ 1114 00000BCC E12FFF1E        BX               lr
+ 1115 00000BD0         ; No output   
+ 1116 00000BD0         
+ 1117 00000BD0         
+ 1118 00000BD0         
+ 1119 00000BD0         
+ 1120 00000BD0         
+ 1121 00000BD0         ; 7 segment display updater that changes the 7seg to dis
+                       play the current level
+ 1122 00000BD0         ; When program initiates, value is 0 then starts at 1 wh
+                       en game begins
+ 1123 00000BD0         ; Author: MTH
+ 1124 00000BD0         ; No input arguments
+ 1125 00000BD0         seg_level
+ 1126 00000BD0 E92D4011        STMFD            sp!, {r0, r4, lr}
+ 1127 00000BD4         ; Load level
+ 1128 00000BD4 E59F433C        LDR              r4, =level
+ 1129 00000BD8 E5940000        LDR              r0, [r4]
+ 1130 00000BDC         ; Display number on 7seg
+ 1131 00000BDC EBFFFFFE        BL               display_digit
+ 1132 00000BE0 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+ 1133 00000BE4 E12FFF1E        BX               lr
+ 1134 00000BE8         ; No output 
+ 1135 00000BE8         
+ 1136 00000BE8         
+ 1137 00000BE8         
+ 1138 00000BE8         ; Routine that will toggle the rgb between red and off
+ 1139 00000BE8         ; Author: MTH
+ 1140 00000BE8         ; No inputs
+ 1141 00000BE8         rgb_toggle
+ 1142 00000BE8 E92D4011        STMFD            sp!, {r0, r4, lr}
+ 1143 00000BEC         ; Load rgb_status
+ 1144 00000BEC E59F4384        LDR              r4, =rgb_status
+ 1145 00000BF0 E5940000        LDR              r0, [r4]
+ 1146 00000BF4 E3500000        CMP              r0, #0      ; Check what rgb cu
+                                                            rrently is set to
+ 1147 00000BF8         ; If rgb_status = 0 change color to red
+ 1148 00000BF8 03A00006        MOVEQ            r0, #6
+ 1149 00000BFC 0BFFFFFE        BLEQ             rgb_set
+ 1150 00000C00 05840000        STREQ            r0,[r4]
+ 1151 00000C04 0A000003        BEQ              rt_end
+ 1152 00000C08         ; Else turn led off and store a 0 in rgb_status
+
+
+
+ARM Macro Assembler    Page 22 
+
+
+ 1153 00000C08 E3A00007        MOV              r0, #7
+ 1154 00000C0C EBFFFFFE        BL               rgb_set
+ 1155 00000C10 E3A00000        MOV              r0, #0
+ 1156 00000C14 E5840000        STR              r0, [r4]
+ 1157 00000C18         rt_end
+ 1158 00000C18 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+ 1159 00000C1C E12FFF1E        BX               lr
+ 1160 00000C20         ; No outputs
+ 1161 00000C20         
+ 1162 00000C20         
+ 1163 00000C20         
+ 1164 00000C20         
+ 1165 00000C20         
+ 1166 00000C20         timer_init
+ 1167 00000C20         ; Store used registers to stack
+ 1168 00000C20 E92D4003        STMFD            sp!, {r0, r1, lr}
+ 1169 00000C24         ; Set interrupt value for Timer0 Match Register 0
+ 1170 00000C24 E59F1358        LDR              r1, =T0MR0
+ 1171 00000C28 E59F0358        LDR              r0, =18432000 ; One second
+ 1172 00000C2C E5810000        STR              r0, [r1]
+ 1173 00000C30         ; Set interrupt value for Timer1 Match Register 0
+ 1174 00000C30 E59F1324        LDR              r1, =T1MR0
+ 1175 00000C34 E59F0350        LDR              r0, =4608000 ; 0.25 sec
+ 1176 00000C38 E5810000        STR              r0, [r1]
+ 1177 00000C3C         ; Modify Match Control Register to interrupt and reset T
+                       imer Counter on match
+ 1178 00000C3C E59F134C        LDR              r1, =T0MCR
+ 1179 00000C40 E3A00003        MOV              r0, #0x03
+ 1180 00000C44 E5810000        STR              r0, [r1]
+ 1181 00000C48         ; Modify Match Control Register to interrupt and reset T
+                       imer Counter on match
+ 1182 00000C48 E59F1344        LDR              r1, =T1MCR
+ 1183 00000C4C E3A00003        MOV              r0, #0x03
+ 1184 00000C50 E5810000        STR              r0, [r1]
+ 1185 00000C54         
+ 1186 00000C54         ; Enable timer0 and reset counter
+ 1187 00000C54 E59F133C        LDR              r1, =0xE0004004 ; T0TCR address
+                                                            
+ 1188 00000C58 E5910000        LDR              r0, [r1]
+ 1189 00000C5C E3800002        ORR              r0, r0, #2
+ 1190 00000C60 E5810000        STR              r0, [r1]
+ 1191 00000C64 E3C00002        BIC              r0, r0, #2
+ 1192 00000C68 E3800001        ORR              r0, r0, #1
+ 1193 00000C6C E5810000        STR              r0, [r1]
+ 1194 00000C70         ; Enable timer0 and reset counter
+ 1195 00000C70 E59F1324        LDR              r1, =0xE0008004 ; T1TCR address
+                                                            
+ 1196 00000C74 E5910000        LDR              r0, [r1]
+ 1197 00000C78 E3800002        ORR              r0, r0, #2
+ 1198 00000C7C E5810000        STR              r0, [r1]
+ 1199 00000C80 E3C00002        BIC              r0, r0, #2
+ 1200 00000C84 E3800001        ORR              r0, r0, #1
+ 1201 00000C88 E5810000        STR              r0, [r1]
+ 1202 00000C8C         
+ 1203 00000C8C E8BD4003        LDMFD            sp!, {r0, r1, lr}
+ 1204 00000C90 E12FFF1E        BX               lr
+ 1205 00000C94         
+ 1206 00000C94         
+ 1207 00000C94         interrupt_init
+
+
+
+ARM Macro Assembler    Page 23 
+
+
+ 1208 00000C94 E92D4003        STMFD            SP!, {r0-r1, lr} 
+                                                            ; Save registers 
+ 1209 00000C98         ; Push button setup   
+ 1210 00000C98 E59F0300        LDR              r0, =0xE002C000
+ 1211 00000C9C E5901000        LDR              r1, [r0]
+ 1212 00000CA0 E3811202        ORR              r1, r1, #0x20000000
+ 1213 00000CA4 E3C11201        BIC              r1, r1, #0x10000000
+ 1214 00000CA8 E5801000        STR              r1, [r0]    ; PINSEL0 bits 29:2
+                                                            8 = 10
+ 1215 00000CAC         
+ 1216 00000CAC         ; Classify sources as IRQ or FIQ
+ 1217 00000CAC E59F02F0        LDR              r0, =0xFFFFF000
+ 1218 00000CB0 E590100C        LDR              r1, [r0, #0xC]
+ 1219 00000CB4 E3811902        ORR              r1, r1, #0x8000 ; External Inte
+                                                            rrupt 1
+ 1220 00000CB8 E3811070        ORR              r1, r1, #0x70 ; UART0, TIMER0, 
+                                                            TIMER1
+ 1221 00000CBC E580100C        STR              r1, [r0, #0xC]
+ 1222 00000CC0         
+ 1223 00000CC0         ; Enable Interrupts
+ 1224 00000CC0 E59F02DC        LDR              r0, =0xFFFFF000
+ 1225 00000CC4 E5901010        LDR              r1, [r0, #0x10]
+ 1226 00000CC8 E3811902        ORR              r1, r1, #0x8000 ; External Inte
+                                                            rrupt 1
+ 1227 00000CCC E3811070        ORR              r1, r1, #0x70 ; UART0, TIMER0, 
+                                                            TIMER1
+ 1228 00000CD0 E5801010        STR              r1, [r0, #0x10]
+ 1229 00000CD4         
+ 1230 00000CD4         ; External Interrupt 1 setup for edge sensitive
+ 1231 00000CD4 E59F02CC        LDR              r0, =0xE01FC148
+ 1232 00000CD8 E5901000        LDR              r1, [r0]
+ 1233 00000CDC E3811002        ORR              r1, r1, #2  ; EINT1 = Edge Sens
+                                                            itive
+ 1234 00000CE0 E5801000        STR              r1, [r0]
+ 1235 00000CE4         
+ 1236 00000CE4         ; UART0 setup to interrupt when data is received
+ 1237 00000CE4 E59F02C0        LDR              r0, =0xE000C004
+ 1238 00000CE8 E5901000        LDR              r1, [r0]
+ 1239 00000CEC E3811001        ORR              r1, r1, #1  ; UART0 interrupts 
+                                                            processor when data
+                                                             received
+ 1240 00000CF0 E5801000        STR              r1, [r0]
+ 1241 00000CF4         
+ 1242 00000CF4         ; Enable FIQ's, Disable IRQ's
+ 1243 00000CF4 E10F0000        MRS              r0, CPSR
+ 1244 00000CF8 E3C00040        BIC              r0, r0, #0x40
+ 1245 00000CFC E3800080        ORR              r0, r0, #0x80
+ 1246 00000D00 E121F000        MSR              CPSR_c, r0
+ 1247 00000D04         
+ 1248 00000D04 E8BD4003        LDMFD            SP!, {r0-r1, lr} 
+                                                            ; Restore registers
+                                                            
+ 1249 00000D08 E12FFF1E        BX               lr          ; Return
+ 1250 00000D0C         
+ 1251 00000D0C         
+ 1252 00000D0C         
+ 1253 00000D0C         FIQ_Handler
+ 1254 00000D0C E92D5FFF        STMFD            sp!, {r0-r12, lr}
+ 1255 00000D10         ; Check for Timer 0 interrupt
+
+
+
+ARM Macro Assembler    Page 24 
+
+
+ 1256 00000D10 E59F0298        LDR              r0, =0xE0004000
+ 1257 00000D14 E5901000        LDR              r1, [r0]
+ 1258 00000D18 E2011001        AND              r1, r1, #1
+ 1259 00000D1C E3510001        CMP              r1, #1
+ 1260 00000D20 0A00000F        BEQ              TIMER0
+ 1261 00000D24         ; Check for Timer 1 Match register 0 interrupt
+ 1262 00000D24 E59F0288        LDR              r0, =0xE0008000
+ 1263 00000D28 E5901000        LDR              r1, [r0]
+ 1264 00000D2C E2011001        AND              r1, r1, #1
+ 1265 00000D30 E3510001        CMP              r1, #1
+ 1266 00000D34 0A00001B        BEQ              TIMER1
+ 1267 00000D38         ; Check for UART0 interrupt
+ 1268 00000D38 E59F0278        LDR              r0, =0xE000C008
+ 1269 00000D3C E5901000        LDR              r1, [r0]
+ 1270 00000D40 E2010001        AND              r0, r1, #1
+ 1271 00000D44 E3500000        CMP              r0, #0
+ 1272 00000D48 0A00003B        BEQ              UART0
+ 1273 00000D4C         ; Check for EINT1 interrupt
+ 1274 00000D4C E59F0268        LDR              r0, =0xE01FC140
+ 1275 00000D50 E5901000        LDR              r1, [r0]
+ 1276 00000D54 E2012002        AND              r2, r1, #2
+ 1277 00000D58 E3520002        CMP              r2, #2
+ 1278 00000D5C 0A00003D        BEQ              EINT1
+ 1279 00000D60         ; Otherwise, exit handler
+ 1280 00000D60 EA000058        B                FIQ_Exit
+ 1281 00000D64         
+ 1282 00000D64         
+ 1283 00000D64         TIMER0
+ 1284 00000D64         ; Clear interrupt
+ 1285 00000D64 E59F4244        LDR              r4, =0xE0004000
+ 1286 00000D68 E3A05001        MOV              r5, #1
+ 1287 00000D6C E5845000        STR              r5, [r4]
+ 1288 00000D70         ; Check game_status if not in game or bomb on board, exi
+                       t handler
+ 1289 00000D70 E59F4198        LDR              r4, =game_status
+ 1290 00000D74 E5940000        LDR              r0, [r4]
+ 1291 00000D78 E3500001        CMP              r0, #1
+ 1292 00000D7C BA000051        BLT              FIQ_Exit
+ 1293 00000D80 E3500002        CMP              r0, #2
+ 1294 00000D84 CA00004F        BGT              FIQ_Exit
+ 1295 00000D88         ; Increment timer counter in memory
+ 1296 00000D88 E59F4184        LDR              r4, =time
+ 1297 00000D8C E5940000        LDR              r0, [r4]
+ 1298 00000D90 E2400001        SUB              r0, r0, #1
+ 1299 00000D94 E5840000        STR              r0, [r4]
+ 1300 00000D98 EBFFFFFE        BL               change_time_value
+ 1301 00000D9C         ; Check if result is 120, branch to game over if it is g
+                       ame over
+ 1302 00000D9C E3500000        CMP              r0, #0
+ 1303 00000DA0 0AFFFD98        BEQ              game_over
+ 1304 00000DA4 EA000047        B                FIQ_Exit
+ 1305 00000DA8         
+ 1306 00000DA8         TIMER1
+ 1307 00000DA8         ; Clear interrupt
+ 1308 00000DA8 E59F4204        LDR              r4, =0xE0008000
+ 1309 00000DAC E3A05001        MOV              r5, #1
+ 1310 00000DB0 E5845000        STR              r5, [r4]
+ 1311 00000DB4 EB000045        BL               check_stati
+ 1312 00000DB8         ; Update fast stuff everytime
+
+
+
+ARM Macro Assembler    Page 25 
+
+
+ 1313 00000DB8 E59F416C        LDR              r4, =fast_enemy_status
+ 1314 00000DBC E5940000        LDR              r0, [r4]
+ 1315 00000DC0 E3500001        CMP              r0, #1
+ 1316 00000DC4 0BFFFE19        BLEQ             fast_enemy_update
+ 1317 00000DC8         ; Check time flag to alternate slow updates
+ 1318 00000DC8 E59F41F0        LDR              r4, =time_flag
+ 1319 00000DCC E5940000        LDR              r0, [r4]
+ 1320 00000DD0 E3500000        CMP              r0, #0
+ 1321 00000DD4 E2200001        EOR              r0, r0, #1
+ 1322 00000DD8 E5840000        STR              r0, [r4]
+ 1323 00000DDC 0A000039        BEQ              FIQ_Exit
+ 1324 00000DE0         ; Update slow stuff
+ 1325 00000DE0 EBFFFD29        BL               bomberman_update
+ 1326 00000DE4 EBFFFD92        BL               slow_enemy_update
+ 1327 00000DE8         ; Check bomb_status
+ 1328 00000DE8 E59F4164        LDR              r4, =bomb_status
+ 1329 00000DEC E5940000        LDR              r0, [r4]
+ 1330 00000DF0 E3500000        CMP              r0, #0
+ 1331 00000DF4 0A000007        BEQ              TIMER1_cont
+ 1332 00000DF8 E2400001        SUB              r0, r0, #1
+ 1333 00000DFC E5840000        STR              r0, [r4]
+ 1334 00000E00 EBFFFF78        BL               rgb_toggle
+ 1335 00000E04 E3500002        CMP              r0, #2
+ 1336 00000E08 0BFFFE6E        BLEQ             print_explosion
+ 1337 00000E0C E3500001        CMP              r0, #1
+ 1338 00000E10 0BFFFF04        BLEQ             clear_explosion
+ 1339 00000E14 EA00002B        B                FIQ_Exit
+ 1340 00000E18         TIMER1_cont
+ 1341 00000E18 E59F4100        LDR              r4, =bomberman_status
+ 1342 00000E1C E5940000        LDR              r0, [r4]
+ 1343 00000E20 E3500000        CMP              r0, #0
+ 1344 00000E24 0BFFFD59        BLEQ             DIE_BOMBERMAN
+ 1345 00000E28 E59F40E0        LDR              r4, =game_status
+ 1346 00000E2C E3A00001        MOV              r0, #1
+ 1347 00000E30 E5840000        STR              r0, [r4]
+ 1348 00000E34 EBFFFF51        BL               RGB_update
+ 1349 00000E38 EA000022        B                FIQ_Exit
+ 1350 00000E3C         
+ 1351 00000E3C         
+ 1352 00000E3C         
+ 1353 00000E3C         UART0
+ 1354 00000E3C E59F4180        LDR              r4, =0xE000C000
+ 1355 00000E40 E5940000        LDR              r0, [r4]
+ 1356 00000E44 E3500020        CMP              r0, #' '
+ 1357 00000E48 0BFFFE44        BLEQ             drop_bomb
+ 1358 00000E4C E59F4114        LDR              r4, =current_direction
+ 1359 00000E50 E5840000        STR              r0, [r4]
+ 1360 00000E54 EA00001B        B                FIQ_Exit
+ 1361 00000E58         
+ 1362 00000E58         EINT1
+ 1363 00000E58         ; wait until button is pressed again 
+ 1364 00000E58 E3A00003        MOV              r0, #3
+ 1365 00000E5C E59F40AC        LDR              r4, =game_status
+ 1366 00000E60 E5840000        STR              r0, [r4]
+ 1367 00000E64 EBFFFF45        BL               RGB_update
+ 1368 00000E68         
+ 1369 00000E68 E3A02000        MOV              r2, #0      ; Local EINT1 inter
+                                                            rupt flag
+ 1370 00000E6C         EINT1_loop
+
+
+
+ARM Macro Assembler    Page 26 
+
+
+ 1371 00000E6C E59F4154        LDR              r4, =IO0PIN
+ 1372 00000E70 E5940000        LDR              r0, [r4]
+ 1373 00000E74 E2000901        AND              r0, r0, #0x00004000
+ 1374 00000E78 E3500901        CMP              r0, #0x00004000
+ 1375 00000E7C 0A000000        BEQ              EINT1_cont
+ 1376 00000E80 1AFFFFF9        BNE              EINT1_loop
+ 1377 00000E84         EINT1_cont
+ 1378 00000E84 E5940000        LDR              r0, [r4]
+ 1379 00000E88 E2000901        AND              r0, r0, #0x00004000
+ 1380 00000E8C E3500901        CMP              r0, #0x00004000
+ 1381 00000E90 0AFFFFFB        BEQ              EINT1_cont
+ 1382 00000E94         EINT1_loop2
+ 1383 00000E94 E5940000        LDR              r0, [r4]
+ 1384 00000E98 E2000901        AND              r0, r0, #0x00004000
+ 1385 00000E9C E3500901        CMP              r0, #0x00004000
+ 1386 00000EA0 1AFFFFFB        BNE              EINT1_loop2
+ 1387 00000EA4 E3A00001        MOV              r0, #1
+ 1388 00000EA8 E59F4060        LDR              r4, =game_status
+ 1389 00000EAC E5840000        STR              r0, [r4]
+ 1390 00000EB0 EBFFFF32        BL               RGB_update
+ 1391 00000EB4         ; exit handler
+ 1392 00000EB4 E59F4100        LDR              r4, =0xE01FC140
+ 1393 00000EB8 E5940000        LDR              r0, [r4]
+ 1394 00000EBC E3800002        ORR              r0, r0, #2  ; Clear Interrupt
+ 1395 00000EC0 E5840000        STR              r0, [r4]
+ 1396 00000EC4 EAFFFFFF        B                FIQ_Exit
+ 1397 00000EC8         FIQ_Exit
+ 1398 00000EC8         ; Exit handler
+ 1399 00000EC8 E8BD5FFF        LDMFD            sp!, {r0-r12, lr}
+ 1400 00000ECC E25EF004        SUBS             pc, lr, #4
+ 1401 00000ED0         
+ 1402 00000ED0         check_stati
+ 1403 00000ED0 E92D4011        STMFD            sp!, {r0, r4, lr}
+ 1404 00000ED4         ; Check if all enemies are dead
+ 1405 00000ED4 E59F4048        LDR              r4, =slow_enemy_1_status
+ 1406 00000ED8 E5940000        LDR              r0, [r4]
+ 1407 00000EDC E3500001        CMP              r0, #1
+ 1408 00000EE0 0A000008        BEQ              cs_exit
+ 1409 00000EE4 E59F403C        LDR              r4, =slow_enemy_2_status
+ 1410 00000EE8 E5940000        LDR              r0, [r4]
+ 1411 00000EEC E3500001        CMP              r0, #1
+ 1412 00000EF0 0A000004        BEQ              cs_exit
+ 1413 00000EF4 E59F4030        LDR              r4, =fast_enemy_status
+ 1414 00000EF8 E5940000        LDR              r0, [r4]
+ 1415 00000EFC E3500001        CMP              r0, #1
+ 1416 00000F00 0A000000        BEQ              cs_exit
+ 1417 00000F04         ; If all enemies are dead, call level_init
+ 1418 00000F04 EBFFFC8D        BL               level_init
+ 1419 00000F08         cs_exit
+ 1420 00000F08 E8BD4011        LDMFD            sp!, {r0, r4, lr}
+ 1421 00000F0C E12FFF1E        BX               lr
+ 1422 00000F10         
+ 1423 00000F10                 END
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+
+
+
+ARM Macro Assembler    Page 27 
+
+
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              E0008018 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              00000000 
+              E0004008 
+              00000000 
+              00000000 
+              00000000 
+              E0004018 
+              01194000 
+              00465000 
+              E0004014 
+              E0008014 
+              E0004004 
+              E0008004 
+              E002C000 
+              FFFFF000 
+              E01FC148 
+              E000C004 
+              E0004000 
+              E0008000 
+              E000C008 
+              E01FC140 
+              00000000 
+              E000C000 
+              E0028000 
+Command Line: --debug --xref --apcs=interwork -olab7.o -IC:\Keil\ARM\INC -IC:\K
+eil\ARM\INC\Philips --predefine="__EVAL SETA 1" --list=lab7.lst lab7.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+DB_exit 00000400
+
+Symbol: DB_exit
+   Definitions
+      At line 431 in file lab7.s
+   Uses
+      At line 406 in file lab7.s
+Comment: DB_exit used once
+DIE_BOMBERMAN 00000390
+
+Symbol: DIE_BOMBERMAN
+   Definitions
+      At line 397 in file lab7.s
+   Uses
+      At line 356 in file lab7.s
+      At line 359 in file lab7.s
+      At line 508 in file lab7.s
+      At line 588 in file lab7.s
+      At line 673 in file lab7.s
+      At line 1344 in file lab7.s
+
+EINT1 00000E58
+
+Symbol: EINT1
+   Definitions
+      At line 1362 in file lab7.s
+   Uses
+      At line 1278 in file lab7.s
+Comment: EINT1 used once
+EINT1_cont 00000E84
+
+Symbol: EINT1_cont
+   Definitions
+      At line 1377 in file lab7.s
+   Uses
+      At line 1375 in file lab7.s
+      At line 1381 in file lab7.s
+
+EINT1_loop 00000E6C
+
+Symbol: EINT1_loop
+   Definitions
+      At line 1370 in file lab7.s
+   Uses
+      At line 1376 in file lab7.s
+Comment: EINT1_loop used once
+EINT1_loop2 00000E94
+
+Symbol: EINT1_loop2
+   Definitions
+      At line 1382 in file lab7.s
+   Uses
+      At line 1386 in file lab7.s
+Comment: EINT1_loop2 used once
+FIQ_Exit 00000EC8
+
+Symbol: FIQ_Exit
+   Definitions
+      At line 1397 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 1280 in file lab7.s
+      At line 1292 in file lab7.s
+      At line 1294 in file lab7.s
+      At line 1304 in file lab7.s
+      At line 1323 in file lab7.s
+      At line 1339 in file lab7.s
+      At line 1349 in file lab7.s
+      At line 1360 in file lab7.s
+      At line 1396 in file lab7.s
+
+FIQ_Handler 00000D0C
+
+Symbol: FIQ_Handler
+   Definitions
+      At line 1253 in file lab7.s
+   Uses
+      At line 50 in file lab7.s
+Comment: FIQ_Handler used once
+LED_life 00000B30
+
+Symbol: LED_life
+   Definitions
+      At line 1043 in file lab7.s
+   Uses
+      At line 400 in file lab7.s
+Comment: LED_life used once
+RGB_update 00000B80
+
+Symbol: RGB_update
+   Definitions
+      At line 1086 in file lab7.s
+   Uses
+      At line 148 in file lab7.s
+      At line 254 in file lab7.s
+      At line 760 in file lab7.s
+      At line 1348 in file lab7.s
+      At line 1367 in file lab7.s
+      At line 1390 in file lab7.s
+
+TIMER0 00000D64
+
+Symbol: TIMER0
+   Definitions
+      At line 1283 in file lab7.s
+   Uses
+      At line 1260 in file lab7.s
+Comment: TIMER0 used once
+TIMER1 00000DA8
+
+Symbol: TIMER1
+   Definitions
+      At line 1306 in file lab7.s
+   Uses
+      At line 1266 in file lab7.s
+Comment: TIMER1 used once
+TIMER1_cont 00000E18
+
+Symbol: TIMER1_cont
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 1340 in file lab7.s
+   Uses
+      At line 1331 in file lab7.s
+Comment: TIMER1_cont used once
+UART0 00000E3C
+
+Symbol: UART0
+   Definitions
+      At line 1353 in file lab7.s
+   Uses
+      At line 1272 in file lab7.s
+Comment: UART0 used once
+bd_exit 000007C0
+
+Symbol: bd_exit
+   Definitions
+      At line 774 in file lab7.s
+   Uses
+      At line 750 in file lab7.s
+Comment: bd_exit used once
+bomb_status 00000018
+
+Symbol: bomb_status
+   Definitions
+      At line 77 in file lab7.s
+   Uses
+      At line 256 in file lab7.s
+      At line 747 in file lab7.s
+      At line 1328 in file lab7.s
+
+bomb_x 00000060
+
+Symbol: bomb_x
+   Definitions
+      At line 116 in file lab7.s
+   Uses
+      At line 770 in file lab7.s
+      At line 788 in file lab7.s
+      At line 966 in file lab7.s
+
+bomb_y 00000064
+
+Symbol: bomb_y
+   Definitions
+      At line 118 in file lab7.s
+   Uses
+      At line 771 in file lab7.s
+      At line 790 in file lab7.s
+      At line 968 in file lab7.s
+
+bomberman_status 00000038
+
+Symbol: bomberman_status
+   Definitions
+      At line 96 in file lab7.s
+   Uses
+      At line 164 in file lab7.s
+      At line 214 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 428 in file lab7.s
+      At line 902 in file lab7.s
+      At line 913 in file lab7.s
+      At line 1341 in file lab7.s
+
+bomberman_update 0000028C
+
+Symbol: bomberman_update
+   Definitions
+      At line 311 in file lab7.s
+   Uses
+      At line 1325 in file lab7.s
+Comment: bomberman_update used once
+bomberman_x 00000030
+
+Symbol: bomberman_x
+   Definitions
+      At line 92 in file lab7.s
+   Uses
+      At line 208 in file lab7.s
+      At line 314 in file lab7.s
+      At line 371 in file lab7.s
+      At line 417 in file lab7.s
+      At line 762 in file lab7.s
+      At line 906 in file lab7.s
+
+bomberman_y 00000034
+
+Symbol: bomberman_y
+   Definitions
+      At line 94 in file lab7.s
+   Uses
+      At line 209 in file lab7.s
+      At line 316 in file lab7.s
+      At line 373 in file lab7.s
+      At line 419 in file lab7.s
+      At line 764 in file lab7.s
+      At line 910 in file lab7.s
+
+bu_cont 000002E4
+
+Symbol: bu_cont
+   Definitions
+      At line 341 in file lab7.s
+   Uses
+      At line 324 in file lab7.s
+      At line 328 in file lab7.s
+      At line 332 in file lab7.s
+      At line 336 in file lab7.s
+
+bu_exit 00000388
+
+Symbol: bu_exit
+   Definitions
+      At line 391 in file lab7.s
+   Uses
+      At line 340 in file lab7.s
+      At line 350 in file lab7.s
+      At line 352 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 354 in file lab7.s
+      At line 357 in file lab7.s
+      At line 361 in file lab7.s
+
+bu_str 00000378
+
+Symbol: bu_str
+   Definitions
+      At line 385 in file lab7.s
+   Uses
+      At line 378 in file lab7.s
+Comment: bu_str used once
+ce_exit 00000B1C
+
+Symbol: ce_exit
+   Definitions
+      At line 1033 in file lab7.s
+   Uses
+      At line 1002 in file lab7.s
+Comment: ce_exit used once
+chck_y 00000A9C
+
+Symbol: chck_y
+   Definitions
+      At line 997 in file lab7.s
+   Uses
+      At line 979 in file lab7.s
+Comment: chck_y used once
+check_2 000009D0
+
+Symbol: check_2
+   Definitions
+      At line 936 in file lab7.s
+   Uses
+      At line 926 in file lab7.s
+Comment: check_2 used once
+check_stati 00000ED0
+
+Symbol: check_stati
+   Definitions
+      At line 1402 in file lab7.s
+   Uses
+      At line 1311 in file lab7.s
+Comment: check_stati used once
+check_y 00000848
+
+Symbol: check_y
+   Definitions
+      At line 825 in file lab7.s
+   Uses
+      At line 802 in file lab7.s
+Comment: check_y used once
+clear_chars 0000008C
+
+Symbol: clear_chars
+   Definitions
+      At line 126 in file lab7.s
+   Uses
+      None
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+Relocatable symbols
+
+Comment: clear_chars unused
+clear_explosion 00000A28
+
+Symbol: clear_explosion
+   Definitions
+      At line 964 in file lab7.s
+   Uses
+      At line 1338 in file lab7.s
+Comment: clear_explosion used once
+cs_exit 00000F08
+
+Symbol: cs_exit
+   Definitions
+      At line 1419 in file lab7.s
+   Uses
+      At line 1408 in file lab7.s
+      At line 1412 in file lab7.s
+      At line 1416 in file lab7.s
+
+current_direction 0000002C
+
+Symbol: current_direction
+   Definitions
+      At line 88 in file lab7.s
+   Uses
+      At line 319 in file lab7.s
+      At line 1358 in file lab7.s
+
+draw_welcome 00000268
+
+Symbol: draw_welcome
+   Definitions
+      At line 293 in file lab7.s
+   Uses
+      At line 185 in file lab7.s
+Comment: draw_welcome used once
+drop_bomb 00000760
+
+Symbol: drop_bomb
+   Definitions
+      At line 744 in file lab7.s
+   Uses
+      At line 1357 in file lab7.s
+Comment: drop_bomb used once
+ec_cont 0000098C
+
+Symbol: ec_cont
+   Definitions
+      At line 917 in file lab7.s
+   Uses
+      At line 909 in file lab7.s
+Comment: ec_cont used once
+ec_edit 00000A08
+
+Symbol: ec_edit
+   Definitions
+      At line 952 in file lab7.s
+   Uses
+      At line 894 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 899 in file lab7.s
+      At line 919 in file lab7.s
+      At line 923 in file lab7.s
+      At line 935 in file lab7.s
+      At line 940 in file lab7.s
+      At line 949 in file lab7.s
+
+ec_exit 00000A18
+
+Symbol: ec_exit
+   Definitions
+      At line 957 in file lab7.s
+   Uses
+      At line 886 in file lab7.s
+      At line 905 in file lab7.s
+      At line 916 in file lab7.s
+      At line 950 in file lab7.s
+
+explosion_check 000008F0
+
+Symbol: explosion_check
+   Definitions
+      At line 874 in file lab7.s
+   Uses
+      At line 795 in file lab7.s
+      At line 810 in file lab7.s
+      At line 814 in file lab7.s
+      At line 818 in file lab7.s
+      At line 822 in file lab7.s
+      At line 838 in file lab7.s
+      At line 842 in file lab7.s
+      At line 846 in file lab7.s
+      At line 850 in file lab7.s
+      At line 855 in file lab7.s
+      At line 859 in file lab7.s
+      At line 863 in file lab7.s
+      At line 867 in file lab7.s
+
+fast_enemy_status 0000005C
+
+Symbol: fast_enemy_status
+   Definitions
+      At line 114 in file lab7.s
+   Uses
+      At line 176 in file lab7.s
+      At line 247 in file lab7.s
+      At line 888 in file lab7.s
+      At line 1313 in file lab7.s
+      At line 1413 in file lab7.s
+
+fast_enemy_update 00000630
+
+Symbol: fast_enemy_update
+   Definitions
+      At line 632 in file lab7.s
+   Uses
+      At line 1316 in file lab7.s
+Comment: fast_enemy_update used once
+fast_enemy_x 00000054
+
+
+
+ARM Macro Assembler    Page 8 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: fast_enemy_x
+   Definitions
+      At line 110 in file lab7.s
+   Uses
+      At line 240 in file lab7.s
+      At line 638 in file lab7.s
+      At line 687 in file lab7.s
+
+fast_enemy_y 00000058
+
+Symbol: fast_enemy_y
+   Definitions
+      At line 112 in file lab7.s
+   Uses
+      At line 243 in file lab7.s
+      At line 640 in file lab7.s
+      At line 689 in file lab7.s
+
+fe1_cont 0000068C
+
+Symbol: fe1_cont
+   Definitions
+      At line 661 in file lab7.s
+   Uses
+      At line 647 in file lab7.s
+      At line 651 in file lab7.s
+      At line 655 in file lab7.s
+      At line 659 in file lab7.s
+
+fe1_location_works 000006C8
+
+Symbol: fe1_location_works
+   Definitions
+      At line 680 in file lab7.s
+   Uses
+      At line 674 in file lab7.s
+Comment: fe1_location_works used once
+fe1_loop 00000640
+
+Symbol: fe1_loop
+   Definitions
+      At line 637 in file lab7.s
+   Uses
+      At line 660 in file lab7.s
+      At line 679 in file lab7.s
+
+fe1_retry 000006BC
+
+Symbol: fe1_retry
+   Definitions
+      At line 675 in file lab7.s
+   Uses
+      At line 667 in file lab7.s
+      At line 669 in file lab7.s
+      At line 671 in file lab7.s
+
+game_over 00000408
+
+
+
+
+ARM Macro Assembler    Page 9 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: game_over
+   Definitions
+      At line 436 in file lab7.s
+   Uses
+      At line 405 in file lab7.s
+      At line 1303 in file lab7.s
+
+game_over_string 00000080
+
+Symbol: game_over_string
+   Definitions
+      At line 124 in file lab7.s
+   Uses
+      At line 440 in file lab7.s
+Comment: game_over_string used once
+game_status 00000000
+
+Symbol: game_status
+   Definitions
+      At line 65 in file lab7.s
+   Uses
+      At line 145 in file lab7.s
+      At line 251 in file lab7.s
+      At line 754 in file lab7.s
+      At line 1034 in file lab7.s
+      At line 1089 in file lab7.s
+      At line 1289 in file lab7.s
+      At line 1345 in file lab7.s
+      At line 1365 in file lab7.s
+      At line 1388 in file lab7.s
+
+get_rand 00000714
+
+Symbol: get_rand
+   Definitions
+      At line 708 in file lab7.s
+   Uses
+      At line 52 in file lab7.s
+      At line 463 in file lab7.s
+      At line 541 in file lab7.s
+      At line 635 in file lab7.s
+
+go_loop 00000428
+
+Symbol: go_loop
+   Definitions
+      At line 446 in file lab7.s
+   Uses
+      At line 447 in file lab7.s
+Comment: go_loop used once
+interrupt_init 00000C94
+
+Symbol: interrupt_init
+   Definitions
+      At line 1207 in file lab7.s
+   Uses
+      At line 51 in file lab7.s
+      At line 187 in file lab7.s
+
+
+
+
+ARM Macro Assembler    Page 10 Alphabetic symbol ordering
+Relocatable symbols
+
+lab7 000000A0
+
+Symbol: lab7
+   Definitions
+      At line 137 in file lab7.s
+   Uses
+      At line 48 in file lab7.s
+Comment: lab7 used once
+level 00000004
+
+Symbol: level
+   Definitions
+      At line 67 in file lab7.s
+   Uses
+      At line 154 in file lab7.s
+      At line 201 in file lab7.s
+      At line 260 in file lab7.s
+      At line 281 in file lab7.s
+      At line 880 in file lab7.s
+      At line 1128 in file lab7.s
+
+level_init 00000140
+
+Symbol: level_init
+   Definitions
+      At line 198 in file lab7.s
+   Uses
+      At line 190 in file lab7.s
+      At line 1418 in file lab7.s
+
+life_count 00000010
+
+Symbol: life_count
+   Definitions
+      At line 73 in file lab7.s
+   Uses
+      At line 180 in file lab7.s
+      At line 402 in file lab7.s
+      At line 1046 in file lab7.s
+
+lives 00000014
+
+Symbol: lives
+   Definitions
+      At line 75 in file lab7.s
+   Uses
+      None
+Comment: lives unused
+ll_end 00000B70
+
+Symbol: ll_end
+   Definitions
+      At line 1066 in file lab7.s
+   Uses
+      At line 1051 in file lab7.s
+      At line 1055 in file lab7.s
+      At line 1059 in file lab7.s
+
+main 00000000
+
+
+
+ARM Macro Assembler    Page 11 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: main
+   Definitions
+      At line 1 in file lab7.s
+   Uses
+      None
+Comment: main unused
+pe_exit 000008E8
+
+Symbol: pe_exit
+   Definitions
+      At line 868 in file lab7.s
+   Uses
+      At line 830 in file lab7.s
+Comment: pe_exit used once
+player_input 00000028
+
+Symbol: player_input
+   Definitions
+      At line 86 in file lab7.s
+   Uses
+      At line 344 in file lab7.s
+      At line 724 in file lab7.s
+
+print_explosion 000007C8
+
+Symbol: print_explosion
+   Definitions
+      At line 785 in file lab7.s
+   Uses
+      At line 1336 in file lab7.s
+Comment: print_explosion used once
+rand_character 00000020
+
+Symbol: rand_character
+   Definitions
+      At line 82 in file lab7.s
+   Uses
+      At line 299 in file lab7.s
+      At line 713 in file lab7.s
+
+rgb_status 0000001C
+
+Symbol: rgb_status
+   Definitions
+      At line 79 in file lab7.s
+   Uses
+      At line 758 in file lab7.s
+      At line 1144 in file lab7.s
+
+rgb_toggle 00000BE8
+
+Symbol: rgb_toggle
+   Definitions
+      At line 1141 in file lab7.s
+   Uses
+      At line 1334 in file lab7.s
+Comment: rgb_toggle used once
+rt_end 00000C18
+
+
+
+ARM Macro Assembler    Page 12 Alphabetic symbol ordering
+Relocatable symbols
+
+
+Symbol: rt_end
+   Definitions
+      At line 1157 in file lab7.s
+   Uses
+      At line 1151 in file lab7.s
+Comment: rt_end used once
+ru_change 00000BC4
+
+Symbol: ru_change
+   Definitions
+      At line 1110 in file lab7.s
+   Uses
+      At line 1093 in file lab7.s
+      At line 1097 in file lab7.s
+      At line 1101 in file lab7.s
+      At line 1105 in file lab7.s
+      At line 1108 in file lab7.s
+
+ru_end 00000BC8
+
+Symbol: ru_end
+   Definitions
+      At line 1112 in file lab7.s
+   Uses
+      At line 1109 in file lab7.s
+Comment: ru_end used once
+score 00000008
+
+Symbol: score
+   Definitions
+      At line 69 in file lab7.s
+   Uses
+      At line 159 in file lab7.s
+      At line 273 in file lab7.s
+      At line 442 in file lab7.s
+      At line 878 in file lab7.s
+
+se1_check 00000448
+
+Symbol: se1_check
+   Definitions
+      At line 465 in file lab7.s
+   Uses
+      None
+Comment: se1_check unused
+se1_cont 000004A4
+
+Symbol: se1_cont
+   Definitions
+      At line 496 in file lab7.s
+   Uses
+      At line 482 in file lab7.s
+      At line 486 in file lab7.s
+      At line 490 in file lab7.s
+      At line 494 in file lab7.s
+
+se1_location_works 000004EC
+
+
+
+
+ARM Macro Assembler    Page 13 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: se1_location_works
+   Definitions
+      At line 518 in file lab7.s
+   Uses
+      At line 509 in file lab7.s
+Comment: se1_location_works used once
+se1_loop 00000458
+
+Symbol: se1_loop
+   Definitions
+      At line 472 in file lab7.s
+   Uses
+      At line 495 in file lab7.s
+      At line 517 in file lab7.s
+
+se1_retry 000004D4
+
+Symbol: se1_retry
+   Definitions
+      At line 510 in file lab7.s
+   Uses
+      At line 502 in file lab7.s
+      At line 504 in file lab7.s
+      At line 506 in file lab7.s
+
+se2_check 0000053C
+
+Symbol: se2_check
+   Definitions
+      At line 544 in file lab7.s
+   Uses
+      At line 470 in file lab7.s
+      At line 516 in file lab7.s
+
+se2_cont 0000059C
+
+Symbol: se2_cont
+   Definitions
+      At line 576 in file lab7.s
+   Uses
+      At line 562 in file lab7.s
+      At line 566 in file lab7.s
+      At line 570 in file lab7.s
+      At line 574 in file lab7.s
+
+se2_location_works 000005E4
+
+Symbol: se2_location_works
+   Definitions
+      At line 598 in file lab7.s
+   Uses
+      At line 589 in file lab7.s
+Comment: se2_location_works used once
+se2_loop 00000550
+
+Symbol: se2_loop
+   Definitions
+      At line 551 in file lab7.s
+   Uses
+
+
+
+ARM Macro Assembler    Page 14 Alphabetic symbol ordering
+Relocatable symbols
+
+      At line 575 in file lab7.s
+      At line 597 in file lab7.s
+
+se2_retry 000005CC
+
+Symbol: se2_retry
+   Definitions
+      At line 590 in file lab7.s
+   Uses
+      At line 582 in file lab7.s
+      At line 584 in file lab7.s
+      At line 586 in file lab7.s
+
+se_exit 00000628
+
+Symbol: se_exit
+   Definitions
+      At line 619 in file lab7.s
+   Uses
+      At line 550 in file lab7.s
+      At line 596 in file lab7.s
+
+seg_level 00000BD0
+
+Symbol: seg_level
+   Definitions
+      At line 1125 in file lab7.s
+   Uses
+      At line 157 in file lab7.s
+      At line 205 in file lab7.s
+
+slow_enemy_1_status 00000044
+
+Symbol: slow_enemy_1_status
+   Definitions
+      At line 102 in file lab7.s
+   Uses
+      At line 168 in file lab7.s
+      At line 225 in file lab7.s
+      At line 467 in file lab7.s
+      At line 930 in file lab7.s
+      At line 1405 in file lab7.s
+
+slow_enemy_1_x 0000003C
+
+Symbol: slow_enemy_1_x
+   Definitions
+      At line 98 in file lab7.s
+   Uses
+      At line 218 in file lab7.s
+      At line 473 in file lab7.s
+      At line 527 in file lab7.s
+      At line 921 in file lab7.s
+
+slow_enemy_1_y 00000040
+
+Symbol: slow_enemy_1_y
+   Definitions
+      At line 100 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 15 Alphabetic symbol ordering
+Relocatable symbols
+
+   Uses
+      At line 221 in file lab7.s
+      At line 475 in file lab7.s
+      At line 529 in file lab7.s
+      At line 927 in file lab7.s
+
+slow_enemy_2_status 00000050
+
+Symbol: slow_enemy_2_status
+   Definitions
+      At line 108 in file lab7.s
+   Uses
+      At line 172 in file lab7.s
+      At line 236 in file lab7.s
+      At line 547 in file lab7.s
+      At line 944 in file lab7.s
+      At line 1409 in file lab7.s
+
+slow_enemy_2_x 00000048
+
+Symbol: slow_enemy_2_x
+   Definitions
+      At line 104 in file lab7.s
+   Uses
+      At line 229 in file lab7.s
+      At line 553 in file lab7.s
+      At line 607 in file lab7.s
+      At line 937 in file lab7.s
+
+slow_enemy_2_y 0000004C
+
+Symbol: slow_enemy_2_y
+   Definitions
+      At line 106 in file lab7.s
+   Uses
+      At line 232 in file lab7.s
+      At line 555 in file lab7.s
+      At line 609 in file lab7.s
+      At line 941 in file lab7.s
+
+slow_enemy_update 00000434
+
+Symbol: slow_enemy_update
+   Definitions
+      At line 458 in file lab7.s
+   Uses
+      At line 1326 in file lab7.s
+Comment: slow_enemy_update used once
+speed_array 00000094
+
+Symbol: speed_array
+   Definitions
+      At line 131 in file lab7.s
+   Uses
+      At line 265 in file lab7.s
+Comment: speed_array used once
+time 0000000C
+
+Symbol: time
+
+
+
+ARM Macro Assembler    Page 16 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 71 in file lab7.s
+   Uses
+      At line 150 in file lab7.s
+      At line 276 in file lab7.s
+      At line 720 in file lab7.s
+      At line 1296 in file lab7.s
+
+time_flag 00000024
+
+Symbol: time_flag
+   Definitions
+      At line 84 in file lab7.s
+   Uses
+      At line 1318 in file lab7.s
+Comment: time_flag used once
+timer_init 00000C20
+
+Symbol: timer_init
+   Definitions
+      At line 1166 in file lab7.s
+   Uses
+      At line 49 in file lab7.s
+      At line 188 in file lab7.s
+
+welcome 00000068
+
+Symbol: welcome
+   Definitions
+      At line 122 in file lab7.s
+   Uses
+      At line 296 in file lab7.s
+Comment: welcome used once
+while_true 00000134
+
+Symbol: while_true
+   Definitions
+      At line 191 in file lab7.s
+   Uses
+      At line 192 in file lab7.s
+Comment: while_true used once
+96 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+IO0PIN E0028000
+
+Symbol: IO0PIN
+   Definitions
+      At line 54 in file lab7.s
+   Uses
+      At line 1371 in file lab7.s
+Comment: IO0PIN used once
+T0MCR E0004014
+
+Symbol: T0MCR
+   Definitions
+      At line 60 in file lab7.s
+   Uses
+      At line 1178 in file lab7.s
+Comment: T0MCR used once
+T0MR0 E0004018
+
+Symbol: T0MR0
+   Definitions
+      At line 56 in file lab7.s
+   Uses
+      At line 1170 in file lab7.s
+Comment: T0MR0 used once
+T1MCR E0008014
+
+Symbol: T1MCR
+   Definitions
+      At line 62 in file lab7.s
+   Uses
+      At line 1182 in file lab7.s
+Comment: T1MCR used once
+T1MR0 E0008018
+
+Symbol: T1MR0
+   Definitions
+      At line 58 in file lab7.s
+   Uses
+      At line 267 in file lab7.s
+      At line 1174 in file lab7.s
+
+5 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+GPIO_init 00000000
+
+Symbol: GPIO_init
+   Definitions
+      At line 15 in file lab7.s
+   Uses
+      At line 141 in file lab7.s
+Comment: GPIO_init used once
+LEDs 00000000
+
+Symbol: LEDs
+   Definitions
+      At line 13 in file lab7.s
+   Uses
+      At line 183 in file lab7.s
+      At line 1064 in file lab7.s
+      At line 1069 in file lab7.s
+
+RGB_LED 00000000
+
+Symbol: RGB_LED
+   Definitions
+      At line 8 in file lab7.s
+   Uses
+      None
+Comment: RGB_LED unused
+brick_setup 00000000
+
+Symbol: brick_setup
+   Definitions
+      At line 30 in file lab7.s
+   Uses
+      At line 286 in file lab7.s
+Comment: brick_setup used once
+change_character 00000000
+
+Symbol: change_character
+   Definitions
+      At line 31 in file lab7.s
+   Uses
+      None
+Comment: change_character unused
+change_score_value 00000000
+
+Symbol: change_score_value
+   Definitions
+      At line 32 in file lab7.s
+   Uses
+      At line 275 in file lab7.s
+      At line 959 in file lab7.s
+
+change_time_value 00000000
+
+Symbol: change_time_value
+   Definitions
+      At line 33 in file lab7.s
+   Uses
+      At line 278 in file lab7.s
+      At line 1300 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+
+check_location 00000000
+
+Symbol: check_location
+   Definitions
+      At line 43 in file lab7.s
+   Uses
+      None
+Comment: check_location unused
+clear_screen 00000000
+
+Symbol: clear_screen
+   Definitions
+      At line 34 in file lab7.s
+   Uses
+      At line 295 in file lab7.s
+      At line 439 in file lab7.s
+
+cmp_str 00000000
+
+Symbol: cmp_str
+   Definitions
+      At line 17 in file lab7.s
+   Uses
+      None
+Comment: cmp_str unused
+cursor_down 00000000
+
+Symbol: cursor_down
+   Definitions
+      At line 36 in file lab7.s
+   Uses
+      None
+Comment: cursor_down unused
+cursor_left 00000000
+
+Symbol: cursor_left
+   Definitions
+      At line 37 in file lab7.s
+   Uses
+      None
+Comment: cursor_left unused
+cursor_position 00000000
+
+Symbol: cursor_position
+   Definitions
+      At line 35 in file lab7.s
+   Uses
+      None
+Comment: cursor_position unused
+cursor_right 00000000
+
+Symbol: cursor_right
+   Definitions
+      At line 38 in file lab7.s
+   Uses
+      None
+Comment: cursor_right unused
+cursor_up 00000000
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+External symbols
+
+
+Symbol: cursor_up
+   Definitions
+      At line 39 in file lab7.s
+   Uses
+      None
+Comment: cursor_up unused
+display_digit 00000000
+
+Symbol: display_digit
+   Definitions
+      At line 12 in file lab7.s
+   Uses
+      At line 1131 in file lab7.s
+Comment: display_digit used once
+div_and_mod 00000000
+
+Symbol: div_and_mod
+   Definitions
+      At line 4 in file lab7.s
+   Uses
+      At line 731 in file lab7.s
+      At line 799 in file lab7.s
+      At line 828 in file lab7.s
+      At line 977 in file lab7.s
+      At line 1000 in file lab7.s
+
+draw_board 00000000
+
+Symbol: draw_board
+   Definitions
+      At line 40 in file lab7.s
+   Uses
+      At line 270 in file lab7.s
+Comment: draw_board used once
+draw_bomberman 00000000
+
+Symbol: draw_bomberman
+   Definitions
+      At line 41 in file lab7.s
+   Uses
+      None
+Comment: draw_bomberman unused
+draw_on_board 00000000
+
+Symbol: draw_on_board
+   Definitions
+      At line 42 in file lab7.s
+   Uses
+      At line 366 in file lab7.s
+      At line 383 in file lab7.s
+      At line 412 in file lab7.s
+      At line 422 in file lab7.s
+      At line 522 in file lab7.s
+      At line 532 in file lab7.s
+      At line 602 in file lab7.s
+      At line 612 in file lab7.s
+      At line 683 in file lab7.s
+      At line 692 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 4 Alphabetic symbol ordering
+External symbols
+
+      At line 767 in file lab7.s
+      At line 809 in file lab7.s
+      At line 813 in file lab7.s
+      At line 817 in file lab7.s
+      At line 821 in file lab7.s
+      At line 837 in file lab7.s
+      At line 841 in file lab7.s
+      At line 845 in file lab7.s
+      At line 849 in file lab7.s
+      At line 854 in file lab7.s
+      At line 858 in file lab7.s
+      At line 862 in file lab7.s
+      At line 866 in file lab7.s
+      At line 973 in file lab7.s
+      At line 985 in file lab7.s
+      At line 988 in file lab7.s
+      At line 991 in file lab7.s
+      At line 994 in file lab7.s
+      At line 1008 in file lab7.s
+      At line 1011 in file lab7.s
+      At line 1014 in file lab7.s
+      At line 1017 in file lab7.s
+      At line 1021 in file lab7.s
+      At line 1024 in file lab7.s
+      At line 1027 in file lab7.s
+      At line 1030 in file lab7.s
+
+edit_array 00000000
+
+Symbol: edit_array
+   Definitions
+      At line 45 in file lab7.s
+   Uses
+      At line 367 in file lab7.s
+      At line 384 in file lab7.s
+      At line 413 in file lab7.s
+      At line 423 in file lab7.s
+      At line 523 in file lab7.s
+      At line 533 in file lab7.s
+      At line 603 in file lab7.s
+      At line 613 in file lab7.s
+      At line 684 in file lab7.s
+      At line 693 in file lab7.s
+      At line 768 in file lab7.s
+      At line 956 in file lab7.s
+
+edit_register 00000000
+
+Symbol: edit_register
+   Definitions
+      At line 5 in file lab7.s
+   Uses
+      None
+Comment: edit_register unused
+int_to_numberString 00000000
+
+Symbol: int_to_numberString
+   Definitions
+      At line 19 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 5 Alphabetic symbol ordering
+External symbols
+
+   Uses
+      At line 444 in file lab7.s
+Comment: int_to_numberString used once
+newline 00000000
+
+Symbol: newline
+   Definitions
+      At line 20 in file lab7.s
+   Uses
+      None
+Comment: newline unused
+numberString_to_int 00000000
+
+Symbol: numberString_to_int
+   Definitions
+      At line 18 in file lab7.s
+   Uses
+      None
+Comment: numberString_to_int unused
+output_character 00000000
+
+Symbol: output_character
+   Definitions
+      At line 21 in file lab7.s
+   Uses
+      None
+Comment: output_character unused
+output_string 00000000
+
+Symbol: output_string
+   Definitions
+      At line 22 in file lab7.s
+   Uses
+      At line 441 in file lab7.s
+      At line 445 in file lab7.s
+
+pin_clear 00000000
+
+Symbol: pin_clear
+   Definitions
+      At line 7 in file lab7.s
+   Uses
+      None
+Comment: pin_clear unused
+populate_array 00000000
+
+Symbol: populate_array
+   Definitions
+      At line 44 in file lab7.s
+   Uses
+      At line 271 in file lab7.s
+Comment: populate_array used once
+println 00000000
+
+Symbol: println
+   Definitions
+      At line 23 in file lab7.s
+   Uses
+      At line 297 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 6 Alphabetic symbol ordering
+External symbols
+
+Comment: println used once
+prompt 00000000
+
+Symbol: prompt
+   Definitions
+      At line 24 in file lab7.s
+   Uses
+      None
+Comment: prompt unused
+read_array 00000000
+
+Symbol: read_array
+   Definitions
+      At line 46 in file lab7.s
+   Uses
+      At line 348 in file lab7.s
+      At line 376 in file lab7.s
+      At line 500 in file lab7.s
+      At line 580 in file lab7.s
+      At line 665 in file lab7.s
+      At line 884 in file lab7.s
+
+read_character 00000000
+
+Symbol: read_character
+   Definitions
+      At line 25 in file lab7.s
+   Uses
+      At line 298 in file lab7.s
+Comment: read_character used once
+read_push_btns 00000000
+
+Symbol: read_push_btns
+   Definitions
+      At line 11 in file lab7.s
+   Uses
+      None
+Comment: read_push_btns unused
+read_string 00000000
+
+Symbol: read_string
+   Definitions
+      At line 26 in file lab7.s
+   Uses
+      None
+Comment: read_string unused
+reverse_string 00000000
+
+Symbol: reverse_string
+   Definitions
+      At line 27 in file lab7.s
+   Uses
+      None
+Comment: reverse_string unused
+rgb_set 00000000
+
+Symbol: rgb_set
+   Definitions
+      At line 9 in file lab7.s
+
+
+
+ARM Macro Assembler    Page 7 Alphabetic symbol ordering
+External symbols
+
+   Uses
+      At line 1111 in file lab7.s
+      At line 1149 in file lab7.s
+      At line 1154 in file lab7.s
+
+seg_pattern_display 00000000
+
+Symbol: seg_pattern_display
+   Definitions
+      At line 10 in file lab7.s
+   Uses
+      None
+Comment: seg_pattern_display unused
+string_length 00000000
+
+Symbol: string_length
+   Definitions
+      At line 28 in file lab7.s
+   Uses
+      None
+Comment: string_length unused
+uart_init 00000000
+
+Symbol: uart_init
+   Definitions
+      At line 14 in file lab7.s
+   Uses
+      At line 142 in file lab7.s
+Comment: uart_init used once
+40 symbols
+463 symbols in table

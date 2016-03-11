@@ -361,7 +361,7 @@ uart_init
 			MOV		r0, #131				; Move 131 into r0
 			STR		r0, [r1, #0xC]			; Store r0 into r1 with offset of 0xC
 			; Change contents held at base address
-			MOV		r0, #1					; Move 3 into r0. This puts it at a baud rate of 384000
+			MOV		r0, #3					; Move 3 into r0. This puts it at a baud rate of 384000
 			STR		r0, [r1] 				; Store r0 into r1
 			; Change contents held at base address + 4
 			MOV		r0, #0					; Move 0 into r0

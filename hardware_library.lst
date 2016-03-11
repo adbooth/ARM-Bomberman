@@ -539,7 +539,7 @@ ARM Macro Assembler    Page 9
                                                             r1 with offset of 0
                                                             xC
   363 0000026C         ; Change contents held at base address
-  364 0000026C E3A00001        MOV              r0, #1      ; Move 3 into r0. T
+  364 0000026C E3A00003        MOV              r0, #3      ; Move 3 into r0. T
                                                             his puts it at a ba
                                                             ud rate of 384000
   365 00000270 E5810000        STR              r0, [r1]    ; Store r0 into r1
